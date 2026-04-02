@@ -19,6 +19,22 @@ dependencies = [
     "pandas-stubs>=3.0.0.260204",
 ]
 
+[tool.basedpyright]
+# Mismo entorno que `uv sync` / desarrollo (pandas-stubs está en .venv)
+venvPath = "."
+venv = ".venv"
+include = ["src"]
+pythonVersion = "3.12"
+reportMissingTypeStubs = "none"
+
+[tool.pyright]
+# Compatibilidad con Pyright clásico
+venvPath = "."
+venv = ".venv"
+include = ["src"]
+pythonVersion = "3.12"
+reportMissingTypeStubs = "none"
+
 [tool.ruff]
 line-length = 79
 target-version = "py311"

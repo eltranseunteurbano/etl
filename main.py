@@ -5,17 +5,34 @@ lanza el dashboard web. Si es la primera ejecución (state.json en
 null) descarga todos los datos históricos; de lo contrario hace
 una actualización incremental del último mes.
 
-Uso::
+Uso (desde el directorio ``etl``, con el intérprete del proyecto)::
 
-    python main.py           # Ejecutar ETL + lanzar dashboard
-    python main.py --etl     # Solo ejecutar ETL (sin dashboard)
-    python main.py --dash    # Solo lanzar dashboard (sin ETL)
+    .venv/bin/python main.py           # ETL + dashboard
+    .venv/bin/python main.py --etl     # Solo ETL
+    .venv/bin/python main.py --dash    # Solo dashboard
+
+Si usas ``uv``: ``uv run python main.py`` (equivale al venv del proyecto).
 """
 
 import argparse
+import importlib.util
+import sys
 
-from src.peluqueria.main import pipeline as peluqueria_pipeline
+from src.peluqueria.pipeline import pipeline as peluqueria_pipeline
 from src.ventas.main import pipeline as ventas_pipeline
+
+
+def _exit_if_missing_openpyxl() -> None:
+    """pandas.read_excel requiere openpyxl; el error por defecto es confuso."""
+    if importlib.util.find_spec("openpyxl") is not None:
+        return
+    print(
+        "Falta openpyxl o no usas el entorno del proyecto.\n"
+        "  cd etl && uv sync\n"
+        "  etl/.venv/bin/python main.py",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
 
 
 def run_etl() -> None:
@@ -47,6 +64,7 @@ def parse_args() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
+    _exit_if_missing_openpyxl()
     args = parse_args()
 
     print("══════════════════════════════════════")
