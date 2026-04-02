@@ -38,6 +38,26 @@ COLS_PELUQUERIA = [
     "ACCESORIO",
 ]
 
+# Dimensiones relacionales (texto normalizado + pandas category)
+COLS_PELUQUERIA_CATEGORICAS = [
+    "NOMBRE DEL PROPIETARIO",
+    "MASCOTA",
+    "RAZA",
+    "SERVICIO",
+    "PELO",
+    "ACCESORIO",
+]
+
+
+def _apply_categoricas_peluqueria(df: pd.DataFrame) -> pd.DataFrame:
+    """Strip, vacíos → NA, dtype category en columnas de dimensión."""
+    out = df.copy()
+    for col in COLS_PELUQUERIA_CATEGORICAS:
+        s = out[col].astype("string").str.strip()
+        s = s.replace("", pd.NA)
+        out[col] = s.astype("category")
+    return out
+
 
 def _read_peluqueria_excel(path: Path) -> pd.DataFrame:
     """Lee el Excel anual; detecta la fila de encabezado."""
@@ -65,6 +85,7 @@ def _clean_peluqueria(df: pd.DataFrame) -> pd.DataFrame:
     out["FECHA"] = pd.to_datetime(out["FECHA"], dayfirst=True, errors="coerce")
     out = out.loc[out["FECHA"].notna()].copy()
     out["FECHA"] = out["FECHA"].dt.strftime("%d/%m/%Y")
+    out = _apply_categoricas_peluqueria(out)
     return out
 
 
@@ -119,6 +140,7 @@ def load() -> None:
         combined["FECHA"], dayfirst=True, errors="coerce"
     )
     combined = combined.sort_values(by="FECHA").reset_index(drop=True)
+    combined = _apply_categoricas_peluqueria(combined)
 
     PROCESSED_FOLDER.mkdir(parents=True, exist_ok=True)
     export = combined.copy()
