@@ -19,7 +19,7 @@ import importlib.util
 import sys
 
 from src.peluqueria.pipeline import pipeline as peluqueria_pipeline
-from src.ventas.main import pipeline as ventas_pipeline
+from src.ventas.pipeline import pipeline as ventas_pipeline
 
 
 def _exit_if_missing_openpyxl() -> None:
