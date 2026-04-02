@@ -19,4 +19,6 @@ STATE_FILE: Path = ROOT / "data" / "state.json"
 
 VENTAS_RAW_DIR: Path = RAW_FOLDER / "ventas"
 VENTAS_INTERIM_DIR: Path = INTERIM_FOLDER / "ventas"
+PELUQUERIA_RAW_DIR: Path = RAW_FOLDER / "peluqueria"
+PELUQUERIA_INTERIM_DIR: Path = INTERIM_FOLDER / "peluqueria"
 DATABASE_PATH: Path = ROOT / "data" / "warehouse.sqlite"

@@ -14,12 +14,14 @@ Uso::
 
 import argparse
 
+from src.peluqueria.main import pipeline as peluqueria_pipeline
 from src.ventas.main import pipeline as ventas_pipeline
 
 
-def run_etl():
+def run_etl() -> None:
     """Ejecuta el pipeline ETL."""
     ventas_pipeline()
+    peluqueria_pipeline()
 
 
 def parse_args() -> argparse.Namespace:
