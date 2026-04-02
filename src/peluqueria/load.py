@@ -14,14 +14,18 @@ from src.config.settings import (
 
 
 # ── Main functions ───────────────────────────────────────────────────────────
-def load() -> None:
-    """Concat interim, orden FECHA, CSV processed y SQLite."""
+def load() -> int | None:
+    """Concat interim, orden FECHA, CSV processed y SQLite.
+
+    Returns:
+        Número de filas cargadas, o ``None`` si no había datos.
+    """
     print("Loading peluquería...")
 
     paths = sorted(PELUQUERIA_INTERIM_DIR.glob("peluqueria_*.csv"))
     if not paths:
         print("  No hay CSV en interim/peluqueria.")
-        return
+        return None
 
     dfs = [pd.read_csv(p, encoding="utf-8") for p in paths]
     combined = pd.concat(dfs, ignore_index=True)
@@ -44,3 +48,4 @@ def load() -> None:
         combined.to_sql("peluqueria", conn, if_exists="replace", index=False)
     n = len(combined)
     print(f"  → processed/peluqueria.csv, SQLite peluqueria ({n} filas)")
+    return n

@@ -3,6 +3,7 @@ name = "etl-tienda-mascotas"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
+    "rich>=13.0",
     "ruffus>=2.8.4",
     "pandas>=2.0",
     "openpyxl>=3.1",

@@ -6,18 +6,26 @@ import sqlite3
 
 import pandas as pd
 
-from src.config.settings import DATABASE_PATH, PROCESSED_FOLDER, VENTAS_INTERIM_DIR
+from src.config.settings import (
+    DATABASE_PATH,
+    PROCESSED_FOLDER,
+    VENTAS_INTERIM_DIR,
+)
 
 
 # ── Main functions ───────────────────────────────────────────────────────────
-def load() -> None:
-    """Concatena CSV de interim y reemplaza la tabla ``ventas`` en SQLite."""
+def load() -> int | None:
+    """Concatena CSV de interim y reemplaza la tabla ``ventas`` en SQLite.
+
+    Returns:
+        Número de filas cargadas, o ``None`` si no había datos.
+    """
     print("Loading ventas diarias...")
 
     paths = sorted(VENTAS_INTERIM_DIR.glob("*.csv"))
     if not paths:
         print("  No hay CSV en interim/ventas; no se actualiza la base.")
-        return
+        return None
 
     dfs = [pd.read_csv(p, encoding="utf-8") for p in paths]
     combined = pd.concat(dfs, ignore_index=True)
@@ -38,4 +46,6 @@ def load() -> None:
     DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DATABASE_PATH) as conn:
         combined.to_sql("ventas", conn, if_exists="replace", index=False)
-    print(f"  → {DATABASE_PATH.name} tabla ventas ({len(combined)} filas)")
+    n = len(combined)
+    print(f"  → {DATABASE_PATH.name} tabla ventas ({n} filas)")
+    return n

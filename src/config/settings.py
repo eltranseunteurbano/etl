@@ -4,7 +4,12 @@ Carga variables de entorno desde .env y expone rutas y parámetros
 usados por todos los sub-pipelines.
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -22,3 +27,12 @@ VENTAS_INTERIM_DIR: Path = INTERIM_FOLDER / "ventas"
 PELUQUERIA_RAW_DIR: Path = RAW_FOLDER / "peluqueria"
 PELUQUERIA_INTERIM_DIR: Path = INTERIM_FOLDER / "peluqueria"
 DATABASE_PATH: Path = ROOT / "data" / "warehouse.sqlite"
+
+# ── Alegra ───────────────────────────────────────────────────────────────────
+ALEGRA_EMAIL: str = os.getenv("ALEGRA_EMAIL", "")
+ALEGRA_TOKEN: str = os.getenv("ALEGRA_TOKEN", "")
+ALEGRA_BASE_URL: str = os.getenv(
+    "ALEGRA_BASE_URL", "https://api.alegra.com/api/v1"
+)
+ALEGRA_RAW_DIR: Path = RAW_FOLDER / "alegra"
+ALEGRA_INTERIM_DIR: Path = INTERIM_FOLDER / "alegra"

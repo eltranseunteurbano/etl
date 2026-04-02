@@ -17,10 +17,8 @@ Si usas ``uv``: ``uv run python main.py`` (equivale al venv del proyecto).
 import argparse
 import importlib.util
 import sys
-from concurrent.futures import ThreadPoolExecutor
 
-from src.peluqueria.pipeline import pipeline as peluqueria_pipeline
-from src.ventas.pipeline import pipeline as ventas_pipeline
+from src.etl_monitor import run_etl_with_monitor
 
 
 def _exit_if_missing_openpyxl() -> None:
@@ -37,12 +35,8 @@ def _exit_if_missing_openpyxl() -> None:
 
 
 def run_etl() -> None:
-    """Ejecuta ventas y peluquería en paralelo (hilos)."""
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        fut_v = executor.submit(ventas_pipeline)
-        fut_p = executor.submit(peluqueria_pipeline)
-        fut_v.result()
-        fut_p.result()
+    """Ejecuta ventas, peluquería y Alegra en paralelo con monitor de consola."""
+    run_etl_with_monitor()
 
 
 def parse_args() -> argparse.Namespace:
