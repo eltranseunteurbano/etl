@@ -13,6 +13,7 @@ import pandas as pd
 
 from src.config.settings import (
     DATABASE_PATH,
+    PROCESSED_FOLDER,
     VENTAS_FOLDER,
     VENTAS_INTERIM_DIR,
     VENTAS_RAW_DIR,
@@ -182,6 +183,19 @@ def load() -> None:
 
     dfs = [pd.read_csv(p, encoding="utf-8") for p in paths]
     combined = pd.concat(dfs, ignore_index=True)
+    combined["FECHA"] = pd.to_datetime(
+        combined["FECHA"], dayfirst=True, errors="coerce"
+    )
+    combined = combined.sort_values(by="FECHA").reset_index(drop=True)
+
+    PROCESSED_FOLDER.mkdir(parents=True, exist_ok=True)
+    export = combined.copy()
+    export["FECHA"] = export["FECHA"].dt.strftime("%d/%m/%Y")
+    export.to_csv(
+        PROCESSED_FOLDER / "ventas.csv",
+        index=False,
+        encoding="utf-8",
+    )
 
     DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DATABASE_PATH) as conn:
