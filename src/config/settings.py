@@ -36,3 +36,14 @@ ALEGRA_BASE_URL: str = os.getenv(
 )
 ALEGRA_RAW_DIR: Path = RAW_FOLDER / "alegra"
 ALEGRA_INTERIM_DIR: Path = INTERIM_FOLDER / "alegra"
+
+# ── Google Calendar ──────────────────────────────────────────────────────────
+GOOGLE_CLIENT_SECRETS_FILE: Path = ROOT / os.getenv(
+    "GOOGLE_CLIENT_SECRETS_FILE", "config/client_secrets.json"
+)
+GOOGLE_TOKEN_FILE: Path = ROOT / os.getenv(
+    "GOOGLE_TOKEN_FILE", "config/token.json"
+)
+GOOGLE_CALENDAR_ID: str = os.getenv("GOOGLE_CALENDAR_ID", "")
+CALENDAR_RAW_DIR: Path = RAW_FOLDER / "calendar"
+CALENDAR_INTERIM_DIR: Path = INTERIM_FOLDER / "calendar"

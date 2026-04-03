@@ -16,7 +16,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-WORKER_NAMES = frozenset({"ventas", "peluqueria", "alegra"})
+WORKER_NAMES = frozenset({"ventas", "peluqueria", "alegra", "calendar"})
 
 
 @dataclass
@@ -38,6 +38,7 @@ class EtlMonitor:
             "ventas": LineState("ventas"),
             "peluqueria": LineState("peluquería"),
             "alegra": LineState("alegra"),
+            "calendar": LineState("calendar"),
         }
         self._log: deque[str] = deque(maxlen=200)
         self._buf: dict[str, str] = {k: "" for k in self._lines}
@@ -104,7 +105,7 @@ class EtlMonitor:
     def render(self) -> Group:
         with self._lock:
             table = Table(show_header=False, box=None, padding=(0, 1))
-            for key in ("ventas", "peluqueria", "alegra"):
+            for key in ("ventas", "peluqueria", "alegra", "calendar"):
                 st = self._lines[key]
                 if st.done:
                     row = Text(f"Hilo {st.label} → {st.done_msg}")
@@ -213,8 +214,30 @@ def _run_alegra(monitor: EtlMonitor) -> None:
     monitor.finish("alegra", message=msg)
 
 
+def _run_calendar(monitor: EtlMonitor) -> None:
+    threading.current_thread().name = "calendar"
+    monitor.arm("calendar")
+    from src.calendar.extract import extract
+    from src.calendar.load import load
+    from src.calendar.transform import transform
+
+    def progress(pct: int, detail: str) -> None:
+        monitor.set_phase("calendar", pct, detail)
+
+    def log(msg: str) -> None:
+        monitor.add_log("calendar", msg)
+
+    extract(on_progress=progress, on_log=log)
+    monitor.set_phase("calendar", 44, "transform")
+    transform()
+    monitor.set_phase("calendar", 78, "load")
+    msg = load()
+    monitor.flush_partial_line("calendar")
+    monitor.finish("calendar", message=msg)
+
+
 def run_etl_with_monitor() -> None:
-    """Ejecuta los tres pipelines en paralelo con vista Rich."""
+    """Ejecuta los cuatro pipelines en paralelo con vista Rich."""
     monitor = EtlMonitor()
     old_stdout = sys.stdout
     sys.stdout = WorkerStdout(monitor, old_stdout)
@@ -237,11 +260,12 @@ def run_etl_with_monitor() -> None:
             ticker = threading.Thread(target=tick, args=(live,), daemon=True)
             ticker.start()
             try:
-                with ThreadPoolExecutor(max_workers=3) as executor:
+                with ThreadPoolExecutor(max_workers=4) as executor:
                     fut_v = executor.submit(_run_ventas, monitor)
                     fut_p = executor.submit(_run_peluqueria, monitor)
                     fut_a = executor.submit(_run_alegra, monitor)
-                    for fut in (fut_v, fut_p, fut_a):
+                    fut_c = executor.submit(_run_calendar, monitor)
+                    for fut in (fut_v, fut_p, fut_a, fut_c):
                         fut.result()
             finally:
                 stop_event.set()
