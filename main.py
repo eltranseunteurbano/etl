@@ -11,13 +11,15 @@ Uso (desde el directorio ``etl``, con el intérprete del proyecto)::
     .venv/bin/python main.py --etl     # Solo ETL
     .venv/bin/python main.py --dash    # Solo dashboard
 
-Si usas ``uv``: ``uv run python main.py`` (equivale al venv del proyecto).
+Si usas ``uv``: ``uv run python main.py --dash`` lanza solo Streamlit, etc.
 """
 
 import argparse
 import importlib.util
 import logging
+import subprocess
 import sys
+from pathlib import Path
 
 from src.config.settings import setup_logging
 from src.etl_monitor import run_etl_with_monitor
@@ -47,6 +49,22 @@ def run_etl() -> None:
         raise SystemExit(1) from exc
 
 
+def run_dashboard() -> None:
+    """Arranca el dashboard con Streamlit (requiere ``streamlit run``)."""
+    script = Path(__file__).resolve().parent / "src" / "dashboard" / "main.py"
+    if not script.is_file():
+        print(
+            f"No se encontró el entrypoint del dashboard: {script}",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+    result = subprocess.run(
+        [sys.executable, "-m", "streamlit", "run", str(script)],
+        check=False,
+    )
+    raise SystemExit(result.returncode)
+
+
 def parse_args() -> argparse.Namespace:
     """Parsea los argumentos de línea de comandos.
 
@@ -71,17 +89,26 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     setup_logging()
-    _exit_if_missing_openpyxl()
     args = parse_args()
+
+    if args.etl and args.dash:
+        print(
+            "No uses --etl y --dash a la vez; elige uno.",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
+
+    if not args.dash:
+        _exit_if_missing_openpyxl()
 
     print("══════════════════════════════════════")
     print("   ETL Tienda de Mascotas")
     print("══════════════════════════════════════")
 
-    if args.etl:
-        # Solo ETL
+    if args.dash:
+        run_dashboard()
+    elif args.etl:
         run_etl()
     else:
-        # Por defecto: ETL + dashboard
         run_etl()
-        print("Running dashboard...")
+        run_dashboard()

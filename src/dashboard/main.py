@@ -7,6 +7,17 @@ if _rp not in sys.path:
     sys.path.insert(0, _rp)
 
 import streamlit as st  # noqa: E402
+from streamlit.runtime.scriptrunner_utils.script_run_context import (  # noqa: E402
+    get_script_run_ctx,
+)
+
+if __name__ == "__main__" and get_script_run_ctx() is None:
+    print(
+        "Este archivo no se ejecuta con Python directo; usa Streamlit:\n"
+        "  uv run streamlit run src/dashboard/main.py",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
 
 main_dashboard = st.Page(
     "pages/inicio.py",
