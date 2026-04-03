@@ -16,8 +16,10 @@ Si usas ``uv``: ``uv run python main.py`` (equivale al venv del proyecto).
 
 import argparse
 import importlib.util
+import logging
 import sys
 
+from src.config.settings import setup_logging
 from src.etl_monitor import run_etl_with_monitor
 
 
@@ -35,8 +37,14 @@ def _exit_if_missing_openpyxl() -> None:
 
 
 def run_etl() -> None:
-    """Ejecuta ventas, peluquería y Alegra en paralelo con monitor de consola."""
-    run_etl_with_monitor()
+    """Ejecuta todos los pipelines ETL en paralelo con monitor de consola."""
+    try:
+        run_etl_with_monitor()
+    except Exception as exc:
+        logging.getLogger("etl").critical(
+            "ETL terminó con errores: %s", exc, exc_info=True
+        )
+        raise SystemExit(1) from exc
 
 
 def parse_args() -> argparse.Namespace:
@@ -62,6 +70,7 @@ def parse_args() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
+    setup_logging()
     _exit_if_missing_openpyxl()
     args = parse_args()
 
