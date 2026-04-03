@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import logging
 import sys
 import threading
 import time
@@ -15,6 +16,8 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+
+_logger = logging.getLogger("etl")
 
 WORKER_NAMES = frozenset({"ventas", "peluqueria", "alegra", "calendar"})
 
@@ -81,7 +84,7 @@ class EtlMonitor:
                 )
 
     def flush_partial_line(self, thread_name: str) -> None:
-        """Emite el resto del buffer sin salto de línea (p. ej. al terminar)."""
+        """Emite el buffer pendiente sin salto de línea al terminar."""
         with self._lock:
             buf = self._buf.get(thread_name, "")
             if buf.strip():
@@ -96,7 +99,9 @@ class EtlMonitor:
             while "\n" in buf:
                 line, buf = buf.split("\n", 1)
                 if line.strip():
-                    self._log.append(prefix + line.rstrip("\r"))
+                    entry = prefix + line.rstrip("\r")
+                    self._log.append(entry)
+                    _logger.info("%s", entry)
             self._buf[thread_name] = buf
 
     def _elapsed(self, key: str) -> float:
@@ -265,8 +270,17 @@ def run_etl_with_monitor() -> None:
                     fut_p = executor.submit(_run_peluqueria, monitor)
                     fut_a = executor.submit(_run_alegra, monitor)
                     fut_c = executor.submit(_run_calendar, monitor)
+                    failed: list[BaseException] = []
                     for fut in (fut_v, fut_p, fut_a, fut_c):
-                        fut.result()
+                        try:
+                            fut.result()
+                        except Exception as exc:
+                            _logger.error(
+                                "Pipeline falló: %s", exc, exc_info=True
+                            )
+                            failed.append(exc)
+                    if failed:
+                        raise failed[0]
             finally:
                 stop_event.set()
                 ticker.join(timeout=3)

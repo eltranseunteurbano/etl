@@ -1,1 +1,1 @@
-"""Paquete ventas del ETL."""
+"""Paquete peluqueria del ETL."""

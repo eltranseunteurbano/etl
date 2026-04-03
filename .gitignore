@@ -228,9 +228,10 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python,macos,visualstudiocode
 
 # ── Proyecto ETL ─────────────────────────────────────────────
-# Credenciales y tokens OAuth
-config/token.json
-config/client_secrets.json
+# Credenciales y tokens OAuth (ubicación recomendada y ubicación legacy)
+credentials/
+src/config/client_secrets.json
+src/config/token.json
 
 # Datos regenerables
 data/raw/

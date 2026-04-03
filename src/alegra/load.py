@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import date
+from datetime import date, datetime, timezone
 
 import pandas as pd
 
@@ -43,21 +43,40 @@ def load() -> str:
     df_productos = _load_csv("productos.csv")
     df_categorias = _load_csv("categorias.csv")
 
+    loaded_at = datetime.now(timezone.utc).isoformat()
+    df_facturas["_etl_loaded_at"] = loaded_at
+    df_productos["_etl_loaded_at"] = loaded_at
+    df_categorias["_etl_loaded_at"] = loaded_at
+
     with sqlite3.connect(DATABASE_PATH) as conn:
-        # Facturas: append solo las nuevas (sin duplicados)
         df_facturas.to_sql(
             "alegra_facturas", conn, if_exists="replace", index=False
         )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_alegra_facturas_id"
+            " ON alegra_facturas(id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_alegra_facturas_date"
+            " ON alegra_facturas(date)"
+        )
         print(f"  Alegra load: {len(df_facturas)} facturas")
 
-        # Productos y categorías: siempre frescos
         df_productos.to_sql(
             "alegra_productos", conn, if_exists="replace", index=False
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_alegra_productos_id"
+            " ON alegra_productos(id)"
         )
         print(f"  Alegra load: {len(df_productos)} productos")
 
         df_categorias.to_sql(
             "alegra_categorias", conn, if_exists="replace", index=False
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_alegra_categorias_id"
+            " ON alegra_categorias(id)"
         )
         print(f"  Alegra load: {len(df_categorias)} categorías")
 

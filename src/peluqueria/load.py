@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -43,9 +44,15 @@ def load() -> int | None:
         encoding="utf-8",
     )
 
+    combined["_etl_loaded_at"] = datetime.now(timezone.utc).isoformat()
+
     DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DATABASE_PATH) as conn:
         combined.to_sql("peluqueria", conn, if_exists="replace", index=False)
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_peluqueria_fecha"
+            " ON peluqueria(FECHA)"
+        )
     n = len(combined)
     print(f"  → processed/peluqueria.csv, SQLite peluqueria ({n} filas)")
     return n
