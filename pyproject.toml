@@ -33,6 +33,12 @@ include = ["src"]
 pythonVersion = "3.12"
 reportMissingTypeStubs = "none"
 
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
 [tool.ruff]
 line-length = 79
 target-version = "py311"
