@@ -286,7 +286,18 @@ def extract(
             key, data = fut.result()
             out[key] = data
 
-    facturas = out["facturas"]
+    facturas_nuevas = out["facturas"]
+    facturas_path = ALEGRA_RAW_DIR / "facturas.json"
+    if from_date and facturas_path.exists():
+        with open(facturas_path, encoding="utf-8") as f:
+            facturas_previas: list[dict] = json.load(f)
+        ids_nuevos = {inv["id"] for inv in facturas_nuevas}
+        facturas = [
+            inv for inv in facturas_previas if inv["id"] not in ids_nuevos
+        ] + facturas_nuevas
+    else:
+        facturas = facturas_nuevas
+
     productos = (
         productos_cached if productos_ya_existen else out["productos"]
     )

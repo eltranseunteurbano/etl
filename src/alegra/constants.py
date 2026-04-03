@@ -25,6 +25,8 @@ PRODUCTOS_COLS: list[str] = [
     "available_quantity",
     "iva_percentage",
     "iva",
+    "total_sold_quantity",
+    "total_revenue",
 ]
 
 CATEGORIAS_COLS: list[str] = [

@@ -75,24 +75,38 @@ def _transform_productos(data: list[dict]) -> pd.DataFrame:
             category.get("id") if isinstance(category, dict) else None
         )
 
+        taxes = item.get("tax") or []
+        iva_pct = float((taxes[0].get("percentage") if taxes else None) or 0)
+        iva_val = round(price_val * iva_pct / 100, 2)
+
         rows.append(
             {
-                "item_id": item.get("id"),
-                "nombre": item.get("name"),
-                "referencia": item.get("reference"),
-                "estado": item.get("status"),
-                "precio": price_val,
-                "categoria_id": categoria_id,
+                "id": item.get("id"),
+                "name": item.get("name"),
+                "reference": item.get("reference"),
+                "status": item.get("status"),
+                "price": price_val,
+                "category_id": categoria_id,
+                "available_quantity": float(
+                    (item.get("inventory") or {}).get("availableQuantity") or 0
+                ),
+                "iva_percentage": iva_pct,
+                "iva": iva_val,
             }
         )
 
-    return pd.DataFrame(rows, columns=PRODUCTOS_COLS)
+    return pd.DataFrame(rows)
 
 
 def _transform_categorias(data: list[dict]) -> pd.DataFrame:
     """Una fila por categoría."""
     rows = [
-        {"categoria_id": c.get("id"), "nombre": c.get("name")} for c in data
+        {
+            "id": c.get("id"),
+            "name": c.get("name"),
+            "status": c.get("status"),
+        }
+        for c in data
     ]
     return pd.DataFrame(rows, columns=CATEGORIAS_COLS)
 
@@ -103,7 +117,21 @@ def transform() -> None:
     _save_csv(df_facturas, "facturas.csv")
     print(f"  Alegra transform: {len(df_facturas)} líneas de factura")
 
-    df_productos = _transform_productos(_load_json("productos.json"))
+    agg = (
+        df_facturas.groupby("item_id")
+        .agg(
+            total_sold_quantity=("quantity", "sum"),
+            total_revenue=("total_product", "sum"),
+        )
+        .reset_index()
+        .rename(columns={"item_id": "id"})
+    )
+    df_productos = (
+        _transform_productos(_load_json("productos.json"))
+        .merge(agg, on="id", how="left")
+        .fillna({"total_sold_quantity": 0.0, "total_revenue": 0.0})
+        [PRODUCTOS_COLS]
+    )
     _save_csv(df_productos, "productos.csv")
     print(f"  Alegra transform: {len(df_productos)} productos")
 
