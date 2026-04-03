@@ -243,7 +243,17 @@ def extract(
         log("  Alegra: fetch completo (primera ejecución)\n")
         factura_params = {}
 
+    productos_path = ALEGRA_RAW_DIR / "productos.json"
+    productos_ya_existen = productos_path.exists()
+
     streams = _Streams()
+    if productos_ya_existen:
+        with open(productos_path, encoding="utf-8") as f:
+            productos_cached: list[dict] = json.load(f)
+        streams.productos.fetched = len(productos_cached)
+        streams.productos.total = len(productos_cached)
+        streams.productos.done = True
+
     last_pct = [_EXTRACT_PCT_LO]
 
     def emit() -> None:
@@ -263,24 +273,35 @@ def extract(
 
     emit()
 
+    futures = []
     with ThreadPoolExecutor(max_workers=3) as pool:
         f_fact = pool.submit(_job_facturas, streams, factura_params, emit)
-        f_prod = pool.submit(_job_productos, streams, emit)
         f_cat = pool.submit(_job_categorias, streams, emit)
+        futures = [f_fact, f_cat]
+        if not productos_ya_existen:
+            futures.append(pool.submit(_job_productos, streams, emit))
 
         out: dict[str, list[dict]] = {}
-        for fut in as_completed([f_fact, f_prod, f_cat]):
+        for fut in as_completed(futures):
             key, data = fut.result()
             out[key] = data
 
     facturas = out["facturas"]
-    productos = out["productos"]
+    productos = (
+        productos_cached if productos_ya_existen else out["productos"]
+    )
     categorias = out["categorias"]
 
     _save_json(facturas, "facturas.json")
     log(f"  Alegra: {len(facturas)} facturas guardadas\n")
-    _save_json(productos, "productos.json")
-    log(f"  Alegra: {len(productos)} productos guardados\n")
+    if not productos_ya_existen:
+        _save_json(productos, "productos.json")
+        log(f"  Alegra: {len(productos)} productos guardados\n")
+    else:
+        log(
+            f"  Alegra: productos ya existían "
+            f"({len(productos)}), se omite fetch\n"
+        )
     _save_json(categorias, "categorias.json")
     log(f"  Alegra: {len(categorias)} categorías guardadas\n")
 

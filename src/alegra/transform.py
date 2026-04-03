@@ -36,24 +36,23 @@ def _transform_facturas(data: list[dict]) -> pd.DataFrame:
         cliente_id = client.get("id")
 
         for line in inv.get("items", []):
-            item_info = line.get("item") or {}
             taxes = line.get("tax") or []
             impuesto_pct = float(
                 (taxes[0].get("percentage") if taxes else None) or 0
             )
             rows.append(
                 {
-                    "invoice_id": invoice_id,
-                    "fecha": fecha,
-                    "cliente_id": cliente_id,
-                    "item_id": item_info.get("id"),
-                    "item_nombre": item_info.get("name") or line.get("name"),
-                    "cantidad": float(line.get("quantity") or 0),
-                    "precio_unitario": float(line.get("price") or 0),
-                    "impuesto_pct": impuesto_pct,
-                    "total_producto": float(line.get("price") or 0)
+                    "id": invoice_id,
+                    "date": fecha,
+                    "client_id": cliente_id,
+                    "item_id": line.get("id"),
+                    "item_name": line.get("name"),
+                    "quantity": float(line.get("quantity") or 0),
+                    "unit_price": float(line.get("price") or 0),
+                    "tax_percentage": impuesto_pct,
+                    "total_product": float(line.get("price") or 0)
                     * float(line.get("quantity") or 0),
-                    "total_factura": total_factura,
+                    "total": total_factura,
                 }
             )
 

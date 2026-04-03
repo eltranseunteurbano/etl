@@ -19,17 +19,6 @@ def _load_csv(filename: str) -> pd.DataFrame:
     return pd.read_csv(ALEGRA_INTERIM_DIR / filename, encoding="utf-8")
 
 
-def _existing_invoice_ids(conn: sqlite3.Connection) -> set:
-    try:
-        return set(
-            pd.read_sql(
-                "SELECT DISTINCT invoice_id FROM alegra_facturas", conn
-            )["invoice_id"].tolist()
-        )
-    except Exception:
-        return set()
-
-
 def _update_state() -> None:
     state: dict = {}
     if STATE_FILE.exists():
@@ -56,16 +45,10 @@ def load() -> str:
 
     with sqlite3.connect(DATABASE_PATH) as conn:
         # Facturas: append solo las nuevas (sin duplicados)
-        existing_ids = _existing_invoice_ids(conn)
-        nuevas = df_facturas[~df_facturas["invoice_id"].isin(existing_ids)]
-        if not nuevas.empty:
-            nuevas.to_sql(
-                "alegra_facturas", conn, if_exists="append", index=False
-            )
-        print(
-            f"  Alegra load: {len(nuevas)} facturas nuevas "
-            f"({len(existing_ids)} ya existían)"
+        df_facturas.to_sql(
+            "alegra_facturas", conn, if_exists="replace", index=False
         )
+        print(f"  Alegra load: {len(df_facturas)} facturas")
 
         # Productos y categorías: siempre frescos
         df_productos.to_sql(
@@ -83,7 +66,7 @@ def load() -> str:
         f"  Alegra load: state.json actualizado ({date.today().isoformat()})"
     )
     return (
-        f"{len(nuevas)} facturas nuevas, "
+        f"{len(df_facturas)} facturas, "
         f"{len(df_productos)} productos, "
         f"{len(df_categorias)} categorías"
     )
