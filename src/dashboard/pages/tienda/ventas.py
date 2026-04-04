@@ -63,8 +63,8 @@ def _load_ventas() -> pd.DataFrame:
     df["AÑO"] = df["FECHA"].dt.year
     df["MES"] = df["FECHA"].dt.month
     df["DIA_SEMANA"] = df["FECHA"].dt.dayofweek
-    df["MA7"] = df["TOTAL VENTAS DÍA"].rolling(7).mean()
-    df["MA30"] = df["TOTAL VENTAS DÍA"].rolling(30).mean()
+    df["MA7"] = df["TOTAL VENTAS DÍA"].rolling(7).median()
+    df["MA30"] = df["TOTAL VENTAS DÍA"].rolling(30).median()
     return df
 
 
@@ -74,7 +74,7 @@ col_ventas = "TOTAL VENTAS DÍA"
 # ── Métricas rápidas ────────────────────────────────────────────────────────
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Días registrados", f"{len(df):,}")
-c2.metric("Promedio diario", f"${df[col_ventas].mean():,.0f}")
+c2.metric("Mediana diaria", f"${df[col_ventas].median():,.0f}")
 c3.metric("Mejor día", f"${df[col_ventas].max():,.0f}")
 c4.metric("Día más bajo", f"${df[col_ventas].min():,.0f}")
 
@@ -99,7 +99,6 @@ with tab1:
     desc = df[col_ventas].describe()
     stats = {
         "Registros": int(desc["count"]),
-        "Media": desc["mean"],
         "Mediana": desc["50%"],
         "Desviación estándar": desc["std"],
         "Mínimo": desc["min"],
@@ -243,37 +242,37 @@ with tab3:
 with tab4:
     años = sorted(df["AÑO"].unique())
 
-    st.subheader("Meses ordenados por promedio de ventas")
+    st.subheader("Meses ordenados por mediana de ventas")
     for año in años:
         df_año = df[df["AÑO"] == año].copy()
         resumen_meses = (
             df_año.groupby("MES")[col_ventas]
-            .agg(["mean", "sum", "count"])
+            .agg(["median", "sum", "count"])
             .reset_index()
             .rename(
-                columns={"mean": "Promedio", "sum": "Total", "count": "Días"}
+                columns={"median": "Mediana", "sum": "Total", "count": "Días"}
             )
-            .sort_values("Promedio", ascending=False)
+            .sort_values("Mediana", ascending=False)
         )
         resumen_meses["Mes"] = resumen_meses["MES"].map(MES_NOMBRES)
 
         with st.expander(f"**{año}**", expanded=True):
             fig_meses = px.bar(
                 resumen_meses,
-                x="Promedio",
+                x="Mediana",
                 y="Mes",
                 orientation="h",
-                text=resumen_meses["Promedio"].apply(lambda v: f"${v:,.0f}"),
-                labels={"Promedio": "Promedio ventas día (COP)", "Mes": ""},
-                title=f"Promedio diario por mes — {año}",
+                text=resumen_meses["Mediana"].apply(lambda v: f"${v:,.0f}"),
+                labels={"Mediana": "Mediana ventas día (COP)", "Mes": ""},
+                title=f"Mediana diaria por mes — {año}",
             )
             fig_meses.update_layout(yaxis={"categoryorder": "total ascending"})
             st.plotly_chart(fig_meses, use_container_width=True)
 
             tabla_meses = resumen_meses[
-                ["Mes", "Promedio", "Total", "Días"]
+                ["Mes", "Mediana", "Total", "Días"]
             ].copy()
-            tabla_meses["Promedio"] = tabla_meses["Promedio"].apply(
+            tabla_meses["Mediana"] = tabla_meses["Mediana"].apply(
                 lambda v: f"${v:,.0f}"
             )
             tabla_meses["Total"] = tabla_meses["Total"].apply(
@@ -284,36 +283,96 @@ with tab4:
             )
 
     st.divider()
-    st.subheader("Días de la semana ordenados por promedio de ventas")
+    st.subheader("Días de la semana ordenados por mediana de ventas")
     for año in años:
         df_año = df[df["AÑO"] == año].copy()
         resumen_dias = (
             df_año.groupby("DIA_SEMANA")[col_ventas]
-            .agg(["mean", "count"])
+            .agg(["median", "count"])
             .reset_index()
-            .rename(columns={"mean": "Promedio", "count": "Días"})
-            .sort_values("Promedio", ascending=False)
+            .rename(columns={"median": "Mediana", "count": "Días"})
+            .sort_values("Mediana", ascending=False)
         )
         resumen_dias["Día"] = resumen_dias["DIA_SEMANA"].map(DIA_NOMBRES)
 
         with st.expander(f"**{año}**", expanded=True):
             fig_dias = px.bar(
                 resumen_dias,
-                x="Promedio",
+                x="Mediana",
                 y="Día",
                 orientation="h",
-                text=resumen_dias["Promedio"].apply(lambda v: f"${v:,.0f}"),
-                labels={"Promedio": "Promedio ventas día (COP)", "Día": ""},
-                title=f"Promedio diario por día de semana — {año}",
+                text=resumen_dias["Mediana"].apply(lambda v: f"${v:,.0f}"),
+                labels={"Mediana": "Mediana ventas día (COP)", "Día": ""},
+                title=f"Mediana diaria por día de semana — {año}",
             )
             fig_dias.update_layout(yaxis={"categoryorder": "total ascending"})
             st.plotly_chart(fig_dias, use_container_width=True)
 
-            tabla_dias = resumen_dias[["Día", "Promedio", "Días"]].copy()
-            tabla_dias["Promedio"] = tabla_dias["Promedio"].apply(
+            tabla_dias = resumen_dias[["Día", "Mediana", "Días"]].copy()
+            tabla_dias["Mediana"] = tabla_dias["Mediana"].apply(
                 lambda v: f"${v:,.0f}"
             )
             st.dataframe(tabla_dias, hide_index=True, use_container_width=True)
+
+    st.divider()
+    st.subheader("Meses con más días atípicos por año")
+    st.caption(
+        "Un día es atípico si su venta está fuera del rango "
+        "Q1 − 1.5×IQR  o  Q3 + 1.5×IQR calculado para ese año."
+    )
+
+    for año in años:
+        df_año = df[df["AÑO"] == año].copy()
+        q1 = df_año[col_ventas].quantile(0.25)
+        q3 = df_año[col_ventas].quantile(0.75)
+        iqr = q3 - q1
+        limite_inf = q1 - 1.5 * iqr
+        limite_sup = q3 + 1.5 * iqr
+
+        df_out = df_año[
+            (df_año[col_ventas] < limite_inf) | (df_año[col_ventas] > limite_sup)
+        ].copy()
+        df_out["Tipo"] = df_out[col_ventas].apply(
+            lambda v: "Alto" if v > limite_sup else "Bajo"
+        )
+
+        conteo = (
+            df_out.groupby("MES")
+            .agg(
+                Atípicos=("MES", "count"),
+                Altos=("Tipo", lambda x: (x == "Alto").sum()),
+                Bajos=("Tipo", lambda x: (x == "Bajo").sum()),
+            )
+            .reset_index()
+            .sort_values("Atípicos", ascending=False)
+        )
+        conteo["Mes"] = conteo["MES"].map(MES_NOMBRES)
+
+        with st.expander(f"**{año}** — {len(df_out)} días atípicos en total", expanded=True):
+            if conteo.empty:
+                st.info("Sin días atípicos este año.")
+            else:
+                fig_out = px.bar(
+                    conteo,
+                    x="Mes",
+                    y="Atípicos",
+                    color="Altos",
+                    text="Atípicos",
+                    labels={
+                        "Atípicos": "Días atípicos",
+                        "Mes": "",
+                        "Altos": "Días altos",
+                    },
+                    title=f"Días atípicos por mes — {año}",
+                    color_continuous_scale="OrRd",
+                    category_orders={
+                        "Mes": [MES_NOMBRES[m] for m in sorted(conteo["MES"])]
+                    },
+                )
+                st.plotly_chart(fig_out, use_container_width=True)
+
+                tabla_out = conteo[["Mes", "Atípicos", "Altos", "Bajos"]]
+                st.dataframe(tabla_out, hide_index=True, use_container_width=True)
 
 # ── Tab 5: Serie de tiempo con tendencia ─────────────────────────────────────
 with tab5:
@@ -335,7 +394,7 @@ with tab5:
             x=df["FECHA"],
             y=df["MA7"],
             mode="lines",
-            name="Media móvil 7 días",
+            name="Mediana móvil 7 días",
             line={"color": "steelblue", "width": 2},
         )
     )
@@ -344,7 +403,7 @@ with tab5:
             x=df["FECHA"],
             y=df["MA30"],
             mode="lines",
-            name="Media móvil 30 días",
+            name="Mediana móvil 30 días",
             line={"color": "firebrick", "width": 2.5},
         )
     )
@@ -357,7 +416,7 @@ with tab5:
     )
     st.plotly_chart(fig_serie, use_container_width=True)
     st.caption(
-        "La media móvil de 30 días suaviza el ruido diario y revela la "
+        "La mediana móvil de 30 días suaviza el ruido diario y revela la "
         "tendencia general del negocio."
     )
 
