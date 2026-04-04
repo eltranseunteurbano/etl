@@ -143,8 +143,9 @@ def transform() -> None:
     df_productos = (
         _transform_productos(_load_json("productos.json"))
         .merge(agg, on="id", how="left")
-        .fillna({"total_sold_quantity": 0.0, "total_revenue": 0.0})
-        [PRODUCTOS_COLS]
+        .fillna({"total_sold_quantity": 0.0, "total_revenue": 0.0})[
+            PRODUCTOS_COLS
+        ]
     )
     mask_prod = df_productos["id"].isin(ids_excluidos)
     if mask_prod.any():

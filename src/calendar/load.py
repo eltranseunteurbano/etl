@@ -22,9 +22,9 @@ def _update_state() -> None:
     if STATE_FILE.exists():
         with open(STATE_FILE, encoding="utf-8") as f:
             state = json.load(f)
-    state.setdefault("calendar", {})["last_run"] = (
-        datetime.now(timezone.utc).isoformat()
-    )
+    state.setdefault("calendar", {})["last_run"] = datetime.now(
+        timezone.utc
+    ).isoformat()
     with open(STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=2, ensure_ascii=False)
 
