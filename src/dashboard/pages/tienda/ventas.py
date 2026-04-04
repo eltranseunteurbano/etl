@@ -47,7 +47,7 @@ NUMERIC_COLS = [
 COL_LABELS = {
     "VENTAS_PRE": "Ventas antes IVA",
     "IVA": "IVA",
-    "VENTAS_POST": "Ventas con IVA",
+    "VENTAS_POST": "Ventas post IVA",
     "TOTAL VENTAS DÍA": "Total ventas día",
     "PELUQUERÍA": "Peluquería",
 }
@@ -99,6 +99,7 @@ with tab1:
     desc = df[col_ventas].describe()
     stats = {
         "Registros": int(desc["count"]),
+        "Promedio": desc["mean"],
         "Mediana": desc["50%"],
         "Desviación estándar": desc["std"],
         "Mínimo": desc["min"],
@@ -124,7 +125,7 @@ with tab1:
             "Valor": list(fmt_stats.values()),
         }
     )
-    st.dataframe(stats_df, hide_index=True, use_container_width=True)
+    st.dataframe(stats_df, hide_index=True, width="stretch")
     st.caption(
         "Asimetría positiva indica cola derecha (días con ventas muy altas). "
         "Curtosis > 3 indica distribución más apuntada que la normal."
@@ -147,30 +148,39 @@ with tab1:
         st.dataframe(
             _fmt_outliers(df.nlargest(10, col_ventas)),
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
     with cb:
         st.markdown("**Top 10 días con menores ventas**")
         st.dataframe(
             _fmt_outliers(df.nsmallest(10, col_ventas)),
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
 
 # ── Tab 2: Distribución ──────────────────────────────────────────────────────
 with tab2:
     st.subheader("Distribución de ventas diarias")
 
+    p99 = df[col_ventas].quantile(0.99)
+    outliers = df[df[col_ventas] > p99]
+    n_out = len(outliers)
+
     fig_hist = px.histogram(
-        df,
+        df[df[col_ventas] <= p99],
         x=col_ventas,
-        nbins=40,
-        marginal="box",
+        marginal="rug",
         labels={col_ventas: "Total ventas día (COP)"},
-        title="Histograma de ventas diarias",
+        title="Distribución de ventas diarias",
+        hover_data=[col_ventas],
     )
-    fig_hist.update_layout(bargap=1)
-    st.plotly_chart(fig_hist, use_container_width=True)
+    fig_hist.update_layout(bargap=0.05)
+    st.plotly_chart(fig_hist, width="stretch")
+
+    st.caption(
+        f"{n_out} días con ventas > ${p99:,.0f} (percentil 99) no se "
+        f"muestran en el gráfico. Rango de esos días: p."
+    )
 
     fig_box = px.box(
         df,
@@ -179,7 +189,7 @@ with tab2:
         labels={col_ventas: "Total ventas día (COP)", "AÑO": "Año"},
         title="Distribución por año (box plot)",
     )
-    st.plotly_chart(fig_box, use_container_width=True)
+    st.plotly_chart(fig_box, width="stretch")
 
     df_mes = df.copy()
     df_mes["Mes"] = df_mes["MES"].map(MES_NOMBRES)
@@ -192,7 +202,7 @@ with tab2:
         labels={col_ventas: "Total ventas día (COP)", "Mes": ""},
         title="Distribución por mes (box plot)",
     )
-    st.plotly_chart(fig_box_mes, use_container_width=True)
+    st.plotly_chart(fig_box_mes, width="stretch")
 
     df_dia = df.copy()
     df_dia["Día"] = df_dia["DIA_SEMANA"].map(DIA_NOMBRES)
@@ -205,7 +215,7 @@ with tab2:
         labels={col_ventas: "Total ventas día (COP)", "Día": ""},
         title="Distribución por día de la semana (box plot)",
     )
-    st.plotly_chart(fig_box_dia, use_container_width=True)
+    st.plotly_chart(fig_box_dia, width="stretch")
 
 # ── Tab 3: Relación entre variables ─────────────────────────────────────────
 with tab3:
@@ -224,7 +234,7 @@ with tab3:
         zmax=1,
         title="Mapa de correlación (Pearson)",
     )
-    st.plotly_chart(fig_heatmap, use_container_width=True)
+    st.plotly_chart(fig_heatmap, width="stretch")
 
     st.subheader("Matriz de dispersión")
     fig_scatter = px.scatter_matrix(
@@ -236,17 +246,17 @@ with tab3:
     )
     fig_scatter.update_traces(marker_size=4)
     fig_scatter.update_layout(height=800)
-    st.plotly_chart(fig_scatter, use_container_width=True)
+    st.plotly_chart(fig_scatter, width="stretch")
 
 # ── Tab 4: Estadísticos por año ─────────────────────────────────────────────
 with tab4:
-    años = sorted(df["AÑO"].unique())
+    years = sorted(df["AÑO"].unique())
 
     st.subheader("Meses ordenados por mediana de ventas")
-    for año in años:
-        df_año = df[df["AÑO"] == año].copy()
+    for year in years:
+        df_year = df[df["AÑO"] == year].copy()
         resumen_meses = (
-            df_año.groupby("MES")[col_ventas]
+            df_year.groupby("MES")[col_ventas]
             .agg(["median", "sum", "count"])
             .reset_index()
             .rename(
@@ -256,7 +266,7 @@ with tab4:
         )
         resumen_meses["Mes"] = resumen_meses["MES"].map(MES_NOMBRES)
 
-        with st.expander(f"**{año}**", expanded=True):
+        with st.expander(f"**{year}**", expanded=True):
             fig_meses = px.bar(
                 resumen_meses,
                 x="Mediana",
@@ -264,10 +274,10 @@ with tab4:
                 orientation="h",
                 text=resumen_meses["Mediana"].apply(lambda v: f"${v:,.0f}"),
                 labels={"Mediana": "Mediana ventas día (COP)", "Mes": ""},
-                title=f"Mediana diaria por mes — {año}",
+                title=f"Mediana diaria por mes — {year}",
             )
             fig_meses.update_layout(yaxis={"categoryorder": "total ascending"})
-            st.plotly_chart(fig_meses, use_container_width=True)
+            st.plotly_chart(fig_meses, width="stretch")
 
             tabla_meses = resumen_meses[
                 ["Mes", "Mediana", "Total", "Días"]
@@ -279,15 +289,15 @@ with tab4:
                 lambda v: f"${v:,.0f}"
             )
             st.dataframe(
-                tabla_meses, hide_index=True, use_container_width=True
+                tabla_meses, hide_index=True, width="stretch"
             )
 
     st.divider()
     st.subheader("Días de la semana ordenados por mediana de ventas")
-    for año in años:
-        df_año = df[df["AÑO"] == año].copy()
+    for year in years:
+        df_year = df[df["AÑO"] == year].copy()
         resumen_dias = (
-            df_año.groupby("DIA_SEMANA")[col_ventas]
+            df_year.groupby("DIA_SEMANA")[col_ventas]
             .agg(["median", "count"])
             .reset_index()
             .rename(columns={"median": "Mediana", "count": "Días"})
@@ -295,7 +305,7 @@ with tab4:
         )
         resumen_dias["Día"] = resumen_dias["DIA_SEMANA"].map(DIA_NOMBRES)
 
-        with st.expander(f"**{año}**", expanded=True):
+        with st.expander(f"**{year}**", expanded=True):
             fig_dias = px.bar(
                 resumen_dias,
                 x="Mediana",
@@ -303,16 +313,16 @@ with tab4:
                 orientation="h",
                 text=resumen_dias["Mediana"].apply(lambda v: f"${v:,.0f}"),
                 labels={"Mediana": "Mediana ventas día (COP)", "Día": ""},
-                title=f"Mediana diaria por día de semana — {año}",
+                title=f"Mediana diaria por día de semana — {year}",
             )
             fig_dias.update_layout(yaxis={"categoryorder": "total ascending"})
-            st.plotly_chart(fig_dias, use_container_width=True)
+            st.plotly_chart(fig_dias, width="stretch")
 
             tabla_dias = resumen_dias[["Día", "Mediana", "Días"]].copy()
             tabla_dias["Mediana"] = tabla_dias["Mediana"].apply(
                 lambda v: f"${v:,.0f}"
             )
-            st.dataframe(tabla_dias, hide_index=True, use_container_width=True)
+            st.dataframe(tabla_dias, hide_index=True, width="stretch")
 
     st.divider()
     st.subheader("Meses con más días atípicos por año")
@@ -321,16 +331,17 @@ with tab4:
         "Q1 − 1.5×IQR  o  Q3 + 1.5×IQR calculado para ese año."
     )
 
-    for año in años:
-        df_año = df[df["AÑO"] == año].copy()
-        q1 = df_año[col_ventas].quantile(0.25)
-        q3 = df_año[col_ventas].quantile(0.75)
+    for year in years:
+        df_year = df[df["AÑO"] == year].copy()
+        q1 = df_year[col_ventas].quantile(0.25)
+        q3 = df_year[col_ventas].quantile(0.75)
         iqr = q3 - q1
         limite_inf = q1 - 1.5 * iqr
         limite_sup = q3 + 1.5 * iqr
 
-        df_out = df_año[
-            (df_año[col_ventas] < limite_inf) | (df_año[col_ventas] > limite_sup)
+        df_out = df_year[
+            (df_year[col_ventas] < limite_inf)
+            | (df_year[col_ventas] > limite_sup)
         ].copy()
         df_out["Tipo"] = df_out[col_ventas].apply(
             lambda v: "Alto" if v > limite_sup else "Bajo"
@@ -348,7 +359,9 @@ with tab4:
         )
         conteo["Mes"] = conteo["MES"].map(MES_NOMBRES)
 
-        with st.expander(f"**{año}** — {len(df_out)} días atípicos en total", expanded=True):
+        with st.expander(
+            f"**{year}** — {len(df_out)} días atípicos en total", expanded=True
+        ):
             if conteo.empty:
                 st.info("Sin días atípicos este año.")
             else:
@@ -363,16 +376,18 @@ with tab4:
                         "Mes": "",
                         "Altos": "Días altos",
                     },
-                    title=f"Días atípicos por mes — {año}",
+                    title=f"Días atípicos por mes — {year}",
                     color_continuous_scale="OrRd",
                     category_orders={
                         "Mes": [MES_NOMBRES[m] for m in sorted(conteo["MES"])]
                     },
                 )
-                st.plotly_chart(fig_out, use_container_width=True)
+                st.plotly_chart(fig_out, width="stretch")
 
                 tabla_out = conteo[["Mes", "Atípicos", "Altos", "Bajos"]]
-                st.dataframe(tabla_out, hide_index=True, use_container_width=True)
+                st.dataframe(
+                    tabla_out, hide_index=True, width="stretch"
+                )
 
 # ── Tab 5: Serie de tiempo con tendencia ─────────────────────────────────────
 with tab5:
@@ -414,7 +429,7 @@ with tab5:
         legend={"orientation": "h", "y": -0.15},
         height=550,
     )
-    st.plotly_chart(fig_serie, use_container_width=True)
+    st.plotly_chart(fig_serie, width="stretch")
     st.caption(
         "La mediana móvil de 30 días suaviza el ruido diario y revela la "
         "tendencia general del negocio."
@@ -433,7 +448,7 @@ with tab6:
         title="Proporción global de ingresos",
         color_discrete_sequence=["steelblue", "coral"],
     )
-    st.plotly_chart(fig_pie, use_container_width=True)
+    st.plotly_chart(fig_pie, width="stretch")
 
     # Área apilada por mes
     df_comp = (
@@ -473,4 +488,4 @@ with tab6:
         yaxis_title="Total (COP)",
         legend={"orientation": "h", "y": -0.15},
     )
-    st.plotly_chart(fig_area, use_container_width=True)
+    st.plotly_chart(fig_area, width="stretch")

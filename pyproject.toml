@@ -15,6 +15,7 @@ dependencies = [
     "streamlit>=1.56.0",
     "watchdog>=6.0.0",
     "plotly>=5.0",
+    "scipy>=1.17.1",
 ]
 
 [tool.basedpyright]
