@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+# IDs de items que son servicios registrados como productos y deben
+# excluirse de las líneas de factura durante el transform.
+# Agrega aquí nuevos IDs cuando los identifiques.
+ITEM_IDS_EXCLUIDOS: list[int] = [2555, 1]
+
 FACTURAS_COLS: list[str] = [
     "id",
     "date",

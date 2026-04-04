@@ -10,7 +10,12 @@ import json
 
 import pandas as pd
 
-from src.alegra.constants import CATEGORIAS_COLS, FACTURAS_COLS, PRODUCTOS_COLS
+from src.alegra.constants import (
+    CATEGORIAS_COLS,
+    FACTURAS_COLS,
+    ITEM_IDS_EXCLUIDOS,
+    PRODUCTOS_COLS,
+)
 from src.config.settings import ALEGRA_INTERIM_DIR, ALEGRA_RAW_DIR
 
 
@@ -56,7 +61,15 @@ def _transform_facturas(data: list[dict]) -> pd.DataFrame:
                 }
             )
 
-    return pd.DataFrame(rows, columns=FACTURAS_COLS)
+    df = pd.DataFrame(rows, columns=FACTURAS_COLS)
+    excluidos = df["item_id"].isin([str(i) for i in ITEM_IDS_EXCLUIDOS])
+    if excluidos.any():
+        print(
+            f"  Alegra transform: {excluidos.sum()} líneas excluidas "
+            f"(item_ids: {ITEM_IDS_EXCLUIDOS})"
+        )
+        df = df[~excluidos].reset_index(drop=True)
+    return df
 
 
 def _transform_productos(data: list[dict]) -> pd.DataFrame:
@@ -126,12 +139,20 @@ def transform() -> None:
         .reset_index()
         .rename(columns={"item_id": "id"})
     )
+    ids_excluidos = [str(i) for i in ITEM_IDS_EXCLUIDOS]
     df_productos = (
         _transform_productos(_load_json("productos.json"))
         .merge(agg, on="id", how="left")
         .fillna({"total_sold_quantity": 0.0, "total_revenue": 0.0})
         [PRODUCTOS_COLS]
     )
+    mask_prod = df_productos["id"].isin(ids_excluidos)
+    if mask_prod.any():
+        print(
+            f"  Alegra transform: {mask_prod.sum()} productos excluidos "
+            f"(item_ids: {ITEM_IDS_EXCLUIDOS})"
+        )
+        df_productos = df_productos[~mask_prod].reset_index(drop=True)
     _save_csv(df_productos, "productos.csv")
     print(f"  Alegra transform: {len(df_productos)} productos")
 

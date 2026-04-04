@@ -288,9 +288,7 @@ with tab4:
             tabla_meses["Total"] = tabla_meses["Total"].apply(
                 lambda v: f"${v:,.0f}"
             )
-            st.dataframe(
-                tabla_meses, hide_index=True, width="stretch"
-            )
+            st.dataframe(tabla_meses, hide_index=True, width="stretch")
 
     st.divider()
     st.subheader("Días de la semana ordenados por mediana de ventas")
@@ -385,9 +383,7 @@ with tab4:
                 st.plotly_chart(fig_out, width="stretch")
 
                 tabla_out = conteo[["Mes", "Atípicos", "Altos", "Bajos"]]
-                st.dataframe(
-                    tabla_out, hide_index=True, width="stretch"
-                )
+                st.dataframe(tabla_out, hide_index=True, width="stretch")
 
 # ── Tab 5: Serie de tiempo con tendencia ─────────────────────────────────────
 with tab5:
