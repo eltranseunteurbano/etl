@@ -57,9 +57,7 @@ df_con_ventas = df_p[df_p["total_revenue"] > 0].copy()
 st.subheader("Ventas diarias (libro de ventas)")
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Total acumulado", f"${df_v['VENTAS_POST'].sum():,.0f}")
-c2.metric(
-    "Mediana diaria", f"${df_v['TOTAL VENTAS DÍA'].median():,.0f}"
-)
+c2.metric("Mediana diaria", f"${df_v['TOTAL VENTAS DÍA'].median():,.0f}")
 c3.metric("Mejor día", f"${df_v['TOTAL VENTAS DÍA'].max():,.0f}")
 c4.metric("Días registrados", f"{len(df_v):,}")
 
@@ -84,21 +82,13 @@ st.divider()
 # ── Tendencia mensual unificada ──────────────────────────────────────────────
 st.subheader("Tendencia mensual de revenue")
 
-df_mens_v = (
-    df_v.groupby(["AÑO", "MES"])["VENTAS_POST"]
-    .sum()
-    .reset_index()
-)
+df_mens_v = df_v.groupby(["AÑO", "MES"])["VENTAS_POST"].sum().reset_index()
 df_mens_v["Fecha"] = pd.to_datetime(
     {"year": df_mens_v["AÑO"], "month": df_mens_v["MES"], "day": 1}
 )
 df_mens_v = df_mens_v.sort_values("Fecha")
 
-df_mens_f = (
-    df_f.groupby(["AÑO", "MES"])["total_product"]
-    .sum()
-    .reset_index()
-)
+df_mens_f = df_f.groupby(["AÑO", "MES"])["total_product"].sum().reset_index()
 df_mens_f["Fecha"] = pd.to_datetime(
     {"year": df_mens_f["AÑO"], "month": df_mens_f["MES"], "day": 1}
 )

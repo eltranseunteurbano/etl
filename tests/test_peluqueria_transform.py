@@ -55,10 +55,19 @@ def test_clean_peluqueria_descarta_fechas_invalidas():
     assert len(result) == 3
 
 
-def test_clean_peluqueria_formato_fecha():
+def test_clean_peluqueria_formato_fecha_iso():
     df = _make_peluqueria_df()
     result = _clean_peluqueria(df)
-    assert result["FECHA"].iloc[0] == "01/03/2024"
+    # Debe guardarse en formato ISO YYYY-MM-DD
+    assert result["FECHA"].iloc[0] == "2024-03-01"
+
+
+def test_clean_peluqueria_fecha_no_invierte_dia_mes():
+    """Día 15 no puede confundirse con mes 15: el mes debe seguir siendo 03."""
+    df = _make_peluqueria_df()
+    result = _clean_peluqueria(df)
+    # Fila 1 es "15/03/2024" → YYYY-MM-DD debe ser "2024-03-15", no "2024-15-03"
+    assert result["FECHA"].iloc[1] == "2024-03-15"
 
 
 def test_clean_peluqueria_columnas_faltantes_lanza_error():
