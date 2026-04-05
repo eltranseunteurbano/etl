@@ -18,6 +18,7 @@ dependencies = [
     "scipy>=1.17.1",
     "scikit-learn>=1.4",
     "statsmodels>=0.14",
+    "holidays>=0.46",
 ]
 
 [tool.basedpyright]

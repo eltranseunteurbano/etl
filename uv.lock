@@ -321,6 +321,7 @@ dependencies = [
     { name = "google-api-python-client" },
     { name = "google-auth" },
     { name = "google-auth-oauthlib" },
+    { name = "holidays" },
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "pandas-stubs" },
@@ -345,6 +346,7 @@ requires-dist = [
     { name = "google-api-python-client", specifier = ">=2.0" },
     { name = "google-auth", specifier = ">=2.0" },
     { name = "google-auth-oauthlib", specifier = ">=1.0" },
+    { name = "holidays", specifier = ">=0.46" },
     { name = "openpyxl", specifier = ">=3.1" },
     { name = "pandas", specifier = ">=2.0" },
     { name = "pandas-stubs", specifier = ">=3.0.0.260204" },
@@ -467,6 +469,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a1/c0/4a54c386282c13449eca8bbe2ddb518181dc113e78d240458a68856b4d69/googleapis_common_protos-1.73.1.tar.gz", hash = "sha256:13114f0e9d2391756a0194c3a8131974ed7bffb06086569ba193364af59163b6", size = 147506, upload-time = "2026-03-26T22:17:38.451Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/dc/82/fcb6520612bec0c39b973a6c0954b6a0d948aadfe8f7e9487f60ceb8bfa6/googleapis_common_protos-1.73.1-py3-none-any.whl", hash = "sha256:e51f09eb0a43a8602f5a915870972e6b4a394088415c79d79605a46d8e826ee8", size = 297556, upload-time = "2026-03-26T22:15:58.455Z" },
+]
+
+[[package]]
+name = "holidays"
+version = "0.93"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "python-dateutil" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8f/61/c7574c53db6a1a6017d26a727fd062da2d9f953afcc2248424390bc06bce/holidays-0.93.tar.gz", hash = "sha256:6b04c45f759bce7c8df70863918ccaab0b465afd6c630a62c9855c99965704e5", size = 855755, upload-time = "2026-03-16T18:24:00.547Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d8/ca/e7dcf602ba3db1b3b55ba3c9a376858cca17bc6e6a5cd580d24eecb508cb/holidays-0.93-py3-none-any.whl", hash = "sha256:2bf4585b5b0956aa608e3dcab3cf7d19b69bf34f664f5881a4b9fdf87a0907da", size = 1405804, upload-time = "2026-03-16T18:23:58.931Z" },
 ]
 
 [[package]]
