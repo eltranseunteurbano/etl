@@ -62,6 +62,12 @@ peluqueria_ventas = st.Page(
     icon=":material/payments:",
     url_path="peluqueria_ventas",
 )
+predicciones = st.Page(
+    "pages/predicciones.py",
+    title="Predicciones",
+    icon=":material/query_stats:",
+    url_path="predicciones",
+)
 
 nav = st.navigation(
     {
@@ -76,6 +82,7 @@ nav = st.navigation(
             peluqueria_agenda,
             peluqueria_ventas,
         ],
+        "Análisis": [predicciones],
     }
 )
 nav.run()
