@@ -10,11 +10,12 @@ dependencies = [
     "google-auth-oauthlib>=1.0",
     "google-api-python-client>=2.0",
     "requests>=2.31",
-    "dash>=2.14",
-    "plotly>=5.18",
-    "dash-bootstrap-components>=1.5",
     "python-dotenv>=1.0",
     "pandas-stubs>=3.0.0.260204",
+    "streamlit>=1.56.0",
+    "watchdog>=6.0.0",
+    "plotly>=5.0",
+    "scipy>=1.17.1",
 ]
 
 [tool.basedpyright]

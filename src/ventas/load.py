@@ -50,8 +50,7 @@ def load() -> int | None:
     with sqlite3.connect(DATABASE_PATH) as conn:
         combined.to_sql("ventas", conn, if_exists="replace", index=False)
         conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_ventas_fecha"
-            " ON ventas(FECHA)"
+            "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas(FECHA)"
         )
     n = len(combined)
     print(f"  → {DATABASE_PATH.name} tabla ventas ({n} filas)")

@@ -235,9 +235,6 @@ src/config/token.json
 
 # Datos regenerables
 data/raw/
-data/interim/
-data/state.json
-data/warehouse.sqlite
 
 # Logs
 logs/

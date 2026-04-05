@@ -298,9 +298,7 @@ def extract(
     else:
         facturas = facturas_nuevas
 
-    productos = (
-        productos_cached if productos_ya_existen else out["productos"]
-    )
+    productos = productos_cached if productos_ya_existen else out["productos"]
     categorias = out["categorias"]
 
     _save_json(facturas, "facturas.json")
