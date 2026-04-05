@@ -17,6 +17,7 @@ from src.calendar.auth import get_credentials
 from src.config.settings import (
     CALENDAR_RAW_DIR,
     GOOGLE_CALENDAR_ID,
+    GOOGLE_CLIENT_SECRETS_FILE,
     STATE_FILE,
 )
 
@@ -94,6 +95,18 @@ def extract(
     def progress(pct: int, detail: str) -> None:
         if on_progress:
             on_progress(pct, detail)
+
+    if not GOOGLE_CALENDAR_ID.strip():
+        raise ValueError(
+            "Calendar: GOOGLE_CALENDAR_ID vacío; configúralo en .env en la "
+            "raíz del proyecto."
+        )
+    if not GOOGLE_CLIENT_SECRETS_FILE.is_file():
+        raise FileNotFoundError(
+            "Calendar: falta OAuth client secrets; archivo esperado en "
+            f"{GOOGLE_CLIENT_SECRETS_FILE}. "
+            "Ajusta GOOGLE_CLIENT_SECRETS_FILE en .env si está en otra ruta."
+        )
 
     progress(5, "autenticando…")
     creds = get_credentials()

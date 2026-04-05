@@ -11,9 +11,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
 ROOT = Path(__file__).resolve().parent.parent.parent
+# Siempre desde la raíz del repo (no depende del cwd al lanzar main.py).
+load_dotenv(ROOT / ".env")
 
 SOURCES_FOLDER: Path = ROOT / "data" / "sources"
 VENTAS_FOLDER: Path = SOURCES_FOLDER / "Ventas"

@@ -19,6 +19,7 @@ from src.config.settings import (
     ALEGRA_EMAIL,
     ALEGRA_RAW_DIR,
     ALEGRA_TOKEN,
+    ROOT,
     STATE_FILE,
 )
 
@@ -233,6 +234,12 @@ def extract(
             on_log(msg)
         else:
             print(msg)
+
+    if not (ALEGRA_EMAIL.strip() and ALEGRA_TOKEN.strip()):
+        raise ValueError(
+            "Alegra: define ALEGRA_EMAIL y ALEGRA_TOKEN en "
+            f"{ROOT / '.env'}"
+        )
 
     from_date = _read_state()
 

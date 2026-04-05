@@ -1,60 +1,82 @@
-# ETL Tienda de Mascotas
+# ETL Srta. Eva
 
-Proyecto de **extracción, transformación y carga (ETL)** de datos operativos de una tienda de mascotas (ventas en Excel, peluquería, contabilidad Alegra y Google Calendar), con **almacén en SQLite** y **dashboard analítico** en Streamlit. Incluye una sección de **predicciones y análisis estadístico** sobre ingresos, patrones pre-festivos y riesgo de inasistencia a citas de peluquería.
+**Autores:**
+- Anny Julieth Valencia Jaramillo
+- Jaime David Burbano Montoya
+- Nayla Ximena Ledesma Montano
 
----
-
-## Qué se hizo
-
-- **Cuatro pipelines ETL independientes** bajo `src/`: **ventas** y **peluquería** (Excel → CSV intermedios → tabla `ventas` en SQLite); **alegra** (API → raw/interim → SQLite); **calendar** (Google Calendar → eventos en SQLite). Se ejecutan en paralelo con un monitor de consola (`src/etl_monitor.py`).
-- **Base de datos única** `data/warehouse.sqlite` como destino común de todas las cargas.
-- **Dashboard multipágina** (`src/dashboard/main.py`) con navegación por secciones: inicio, Tienda (dashboard, ventas, productos), Peluquería (dashboard, agenda, ventas) y **Análisis → Predicciones**.
-- **Página Predicciones** (`src/dashboard/pages/predicciones.py`): modelos de series de tiempo y regresión logística, más comparativas de ventas alrededor de **festivos colombianos** (librería `holidays`).
-
-Los datos de negocio y nombres de columnas están en **español**, alineados con las fuentes originales.
+Proyecto de **extracción, transformación y carga (ETL)** de datos operativos de una tienda de mascotas. Procesa ventas en Excel, registros de peluquería, contabilidad (Alegra) y citas (Google Calendar), los consolida en un **almacén SQLite** y los expone a través de un **dashboard analítico en Streamlit** con sección de predicciones y análisis estadístico.
 
 ---
 
-## Cómo funciona (visión general)
+## Contenido
 
-1. **Fuentes**: archivos Excel en `data/sources/`, API de Alegra y API de Google Calendar (credenciales vía `.env`).
-2. **ETL**: cada pipeline sigue el patrón **extract → transform → load**; las rutas centralizadas están en `src/config/settings.py` (`ROOT`, `RAW_FOLDER`, `DATABASE_PATH`, etc.).
-3. **Carga**: tablas como `ventas`, `calendar_events` y las de Alegra quedan en `data/warehouse.sqlite`.
-4. **Dashboard**: Streamlit lee la base al vuelo; Plotly se usa para gráficos interactivos.
-5. **Estado incremental**: `data/state.json` ayuda a no reprocesar todo en cada corrida (según el diseño de cada pipeline).
+- [Requisitos](#requisitos)
+- [Configuración](#configuración)
+  - [Google Calendar: archivos en `credentials/`](#google-calendar-archivos-en-credentials)
+- [Cómo correr](#cómo-correr)
+- [Arquitectura](#arquitectura)
+- [Predicciones y análisis](#predicciones-y-análisis)
+- [Estructura del proyecto](#estructura-del-proyecto)
 
 ---
 
 ## Requisitos
 
 - **Python ≥ 3.11**
-- **[uv](https://github.com/astral-sh/uv)** recomendado para dependencias (o un venv con las dependencias de `pyproject.toml`).
-
----
-
-## Cómo se corre
-
-Desde la raíz del repositorio (`etl/`):
+- **[uv](https://github.com/astral-sh/uv)** para gestión de dependencias
 
 ```bash
 uv sync
 ```
 
+---
+
+## Configuración
+
+Copia `.env.example` a `.env` y completa las credenciales necesarias:
+
+```bash
+cp .env.example .env
+```
+
+Variables relevantes:
+- `ALEGRA_EMAIL` / `ALEGRA_TOKEN` — API de contabilidad Alegra
+- `GOOGLE_CALENDAR_ID` — ID del calendario (suele ser tu correo de Google)
+- `GOOGLE_CLIENT_SECRETS_FILE` / `GOOGLE_TOKEN_FILE` — rutas a los JSON de OAuth (por defecto bajo `credentials/`; solo hace falta definirlas si usas otra ubicación)
+- `DASH_HOST` / `DASH_PORT` / `DASH_DEBUG` — servidor del dashboard
+
+> Sin Alegra o Calendar configurados, esos pipelines no traerán datos; los pipelines de ventas y peluquería (basados en Excel) funcionan de forma independiente.
+
+### Google Calendar: archivos en `credentials/`
+
+El pipeline de Calendar **no funciona** hasta que existan estos archivos en el disco (no van en Git; están en `.gitignore` para no subir secretos a GitHub).
+
+1. **`credentials/client_secrets.json`** — Debes **añadirlo tú manualmente**. Descárgalo desde [Google Cloud Console](https://console.cloud.google.com/) → *APIs y servicios* → *Credenciales* → cliente OAuth 2.0 (tipo *Escritorio* o el que uses para el flujo instalado). Coloca el JSON en `credentials/client_secrets.json` (o la ruta que indiques en `GOOGLE_CLIENT_SECRETS_FILE` dentro de `.env`).
+
+2. **`credentials/token.json`** — No se entrega con el proyecto. Se **genera automáticamente** la primera vez que ejecutas el ETL de Calendar (o `src.calendar.pipeline`): se abrirá el navegador para autorizar la app y el token quedará guardado en ese archivo.
+
+Más detalle y despliegue en servidor: [`credentials/README.md`](credentials/README.md).
+
+---
+
+## Cómo correr
+
 ### ETL y dashboard
 
 ```bash
-uv run python main.py              # ETL completo + arranque del dashboard
+uv run python main.py              # ETL completo + dashboard
 uv run python main.py --etl        # Solo ETL
-uv run python main.py --dash       # Solo dashboard (sin ETL)
+uv run python main.py --dash       # Solo dashboard
 ```
 
-### Solo dashboard (equivalente directo con Streamlit)
+### Dashboard directo con Streamlit
 
 ```bash
 uv run streamlit run src/dashboard/main.py
 ```
 
-### Un pipeline suelto (ejemplos)
+### Un pipeline por separado
 
 ```bash
 uv run python -c "from src.ventas.pipeline import ventas_pipeline; ventas_pipeline()"
@@ -70,53 +92,99 @@ uv run pytest
 uv run flake8 src/
 ```
 
-La comprobación de estilo usa **flake8** (`setup.cfg`: línea máxima 79 caracteres, alineado con PEP 8).
+---
 
-### Configuración
+## Arquitectura
 
-Copia `.env.example` a `.env` y completa credenciales donde aplique (Alegra, Google OAuth para Calendar, host/puerto del dashboard, etc.). Sin Calendar o Alegra configurados, esos pipelines pueden fallar o no traer datos; el resto del proyecto puede seguir siendo útil según lo que tengas en `data/`.
+Cuatro pipelines ETL independientes bajo `src/`, ejecutados en paralelo por `src/etl_monitor.py` (`ThreadPoolExecutor` + monitor Rich en consola).
+
+### Flujo de datos
+
+**Ventas y peluquería** (basados en Excel):
+```
+data/sources/  →  extract()  →  data/raw/
+                               ↓ transform()
+                            data/interim/
+                               ↓ load()
+                            data/processed/  +  data/warehouse.sqlite
+```
+
+**Alegra y Calendar** (basados en API):
+```
+REST API / Google Calendar API
+  →  extract()   →  data/raw/<pipeline>/
+  →  transform() →  data/interim/<pipeline>/
+  →  load()      →  data/warehouse.sqlite
+```
+
+### Módulos por pipeline
+
+Cada uno sigue el mismo patrón:
+
+| Archivo | Rol |
+|---------|-----|
+| `constants.py` | Nombres de columna y mapeos |
+| `extract.py` | Fuente → CSV/JSON crudo |
+| `transform.py` | Limpieza, normalización, validación |
+| `load.py` | CSV procesado + tabla SQLite |
+| `pipeline.py` | Orquesta extract → transform → load |
+
+Las rutas compartidas están en `src/config/settings.py` (`ROOT`, `RAW_FOLDER`, `DATABASE_PATH`, etc.). Nunca las hardcodees.
+
+### Dashboard
+
+Aplicación multipágina en Streamlit con navegación por secciones:
+
+- **Inicio** — resumen general
+- **Tienda** — dashboard, ventas, productos
+- **Peluquería** — dashboard, agenda, ventas
+- **Análisis → Predicciones** — modelos estadísticos (ver sección siguiente)
 
 ---
 
-## Predicciones y análisis (`Análisis` → `Predicciones`)
+## Predicciones y análisis
 
-La página tiene **dos pestañas**. Todo es **estimación** sobre datos históricos, no una garantía de resultados futuros.
+Accesible desde **Análisis → Predicciones** en el dashboard. Todo es estimación sobre datos históricos.
 
 ### Pestaña 1 — Forecast de ingresos
 
-1. **Proyección mensual (Holt-Winters)**
-   - **Statsmodels** `ExponentialSmoothing`: tendencia aditiva y, si hay **al menos 18 meses** de historia, **estacionalidad anual** (periodo 12).
-   - El usuario elige fuente: **tienda** (`VENTAS_POST`) o **peluquería** (`PELUQUERÍA`).
-   - Slider de **horizonte** (1–6 meses). Se muestran histórico, serie ajustada, proyección e intervalo aproximado al 95 % (basado en dispersión de residuos).
-   - Requisito mínimo: **6 meses** de datos agregados; si el último mes es el mes en curso incompleto, se excluye del ajuste.
+**Proyección mensual (Holt-Winters)**
+- Modelo `ExponentialSmoothing` de statsmodels con tendencia aditiva y, si hay ≥ 18 meses de historia, estacionalidad anual (periodo 12).
+- El usuario elige fuente: **tienda** (`VENTAS_POST`) o **peluquería** (`PELUQUERÍA`).
+- Slider de horizonte (1–6 meses). Se muestran histórico, serie ajustada, proyección e intervalo al 95 % (basado en residuos).
+- Requiere mínimo **6 meses** de datos; el mes en curso incompleto se excluye del ajuste.
 
-2. **Ventas y días previos a festivo**
-   - Usa **festivos de Colombia** (`holidays.country_holidays("CO")`).
-   - Marca cada día de ventas como **normal**, **pre-festivo** (hasta **7 días** antes de un festivo) o **festivo**.
-   - Gráficos de **mediana de ventas diarias** por tipo de día y **top 10 festivos** asociados a mayores medianas en víspera.
+**Ventas cerca de festivos colombianos**
+- Usa `holidays.country_holidays("CO")`.
+- Clasifica cada día como **normal**, **pre-festivo** (hasta 7 días antes) o **festivo**.
+- Muestra mediana de ventas diarias por tipo de día y top 10 festivos con mayor mediana en víspera.
 
 ### Pestaña 2 — Riesgo de inasistencia
 
-- **Datos**: citas del calendario con etiquetas de **asistió** vs **faltó** (según `color_label` en `calendar_events`).
-- **Modelo**: **regresión logística** (scikit-learn), con variables **hora**, **día de semana**, **mes**, **día festivo** y **víspera de festivo** (misma ventana de 7 días). Los predictores se estandarizan con `StandardScaler`.
+- **Datos**: citas del calendario etiquetadas como *asistió* / *faltó* (campo `color_label` en `calendar_events`).
+- **Modelo**: regresión logística (scikit-learn) con variables hora, día de semana, mes, festivo y víspera de festivo. Predictores estandarizados con `StandardScaler`.
 - **Salidas**:
-  - métricas (citas, tasa de inasistencias, exactitud por validación cruzada, conteos pre-festivo/festivo);
-  - **mapa de calor** día × hora con probabilidad estimada de inasistencia en escenario “día normal, sin festivo”;
-  - barras de **tasa de inasistencia** por tipo de día (normal / pre-festivo / festivo);
-  - barras de **importancia relativa** (valor absoluto de coeficientes del modelo).
-- Requisito mínimo: **30 citas** etiquetadas en esas categorías.
+  - métricas generales (citas, tasa de inasistencia, exactitud por validación cruzada);
+  - mapa de calor día × hora con probabilidad estimada de inasistencia en escenario normal;
+  - tasa de inasistencia por tipo de día (normal / pre-festivo / festivo);
+  - importancia relativa de cada predictor (valor absoluto de coeficientes).
+- Requiere mínimo **30 citas** etiquetadas.
 
 ---
 
-## Estructura relevante
+## Estructura del proyecto
 
 | Ruta | Rol |
 |------|-----|
 | `main.py` | Entrada: ETL y/o dashboard |
 | `src/config/settings.py` | Rutas y constantes compartidas |
-| `src/ventas/`, `src/peluqueria/`, `src/alegra/`, `src/calendar/` | Pipelines ETL |
-| `src/etl_monitor.py` | Ejecución en paralelo del ETL |
-| `src/dashboard/main.py` | Navegación Streamlit |
+| `src/ventas/` | Pipeline ETL de ventas |
+| `src/peluqueria/` | Pipeline ETL de peluquería |
+| `src/alegra/` | Pipeline ETL de Alegra (API) |
+| `src/calendar/` | Pipeline ETL de Google Calendar |
+| `src/etl_monitor.py` | Ejecución paralela de los pipelines |
+| `src/dashboard/main.py` | Entrada del dashboard Streamlit |
 | `src/dashboard/pages/` | Páginas del dashboard (incl. `predicciones.py`) |
-| `data/warehouse.sqlite` | Base analítica |
+| `data/warehouse.sqlite` | Base analítica unificada |
 | `data/state.json` | Estado incremental (Calendar, etc.) |
+| `credentials/` | OAuth de Google Calendar: añadir `client_secrets.json`; `token.json` se crea al primer uso (no versionar) |
