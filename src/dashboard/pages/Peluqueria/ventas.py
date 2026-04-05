@@ -123,9 +123,7 @@ with tab1:
             fmt[k] = f"${v:,.0f}"
 
     st.dataframe(
-        pd.DataFrame(
-            {"Estadístico": list(fmt.keys()), "Valor": list(fmt.values())}
-        ),
+        pd.DataFrame({"Estadístico": list(fmt.keys()), "Valor": list(fmt.values())}),
         hide_index=True,
         width="stretch",
     )
@@ -225,9 +223,7 @@ with tab3:
             df_yr.groupby("MES")[COL_PELU]
             .agg(["median", "sum", "count"])
             .reset_index()
-            .rename(
-                columns={"median": "Mediana", "sum": "Total", "count": "Días"}
-            )
+            .rename(columns={"median": "Mediana", "sum": "Total", "count": "Días"})
             .sort_values("Mediana", ascending=False)
         )
         res_mes["Mes"] = res_mes["MES"].map(MES_NOMBRES)
@@ -273,9 +269,7 @@ with tab3:
             fig_dia.update_layout(yaxis={"categoryorder": "total ascending"})
             st.plotly_chart(fig_dia, width="stretch")
             tabla_dia = res_dia[["Día", "Mediana", "Días"]].copy()
-            tabla_dia["Mediana"] = tabla_dia["Mediana"].apply(
-                lambda v: f"${v:,.0f}"
-            )
+            tabla_dia["Mediana"] = tabla_dia["Mediana"].apply(lambda v: f"${v:,.0f}")
             st.dataframe(tabla_dia, hide_index=True, width="stretch")
 
     st.divider()
@@ -289,8 +283,7 @@ with tab3:
         q3 = df_yr[COL_PELU].quantile(0.75)
         iqr = q3 - q1
         df_out = df_yr[
-            (df_yr[COL_PELU] < q1 - 1.5 * iqr)
-            | (df_yr[COL_PELU] > q3 + 1.5 * iqr)
+            (df_yr[COL_PELU] < q1 - 1.5 * iqr) | (df_yr[COL_PELU] > q3 + 1.5 * iqr)
         ].copy()
         df_out["Tipo"] = df_out[COL_PELU].apply(
             lambda v: "Alto" if v > q3 + 1.5 * iqr else "Bajo"
@@ -350,16 +343,12 @@ with tab4:
         labels={"Revenue": "Revenue total (COP)", "SERVICIO": ""},
         title="Revenue acumulado por tipo de servicio",
     )
-    fig_serv.update_layout(
-        yaxis={"categoryorder": "total ascending"}, height=500
-    )
+    fig_serv.update_layout(yaxis={"categoryorder": "total ascending"}, height=500)
     st.plotly_chart(fig_serv, width="stretch")
 
     tabla_serv = serv_agg.copy()
     tabla_serv["Revenue"] = tabla_serv["Revenue"].apply(lambda v: f"${v:,.0f}")
-    tabla_serv["Promedio"] = tabla_serv["Promedio"].apply(
-        lambda v: f"${v:,.0f}"
-    )
+    tabla_serv["Promedio"] = tabla_serv["Promedio"].apply(lambda v: f"${v:,.0f}")
     tabla_serv.columns = ["Servicio", "Revenue", "Cantidad", "Precio promedio"]
     st.dataframe(tabla_serv, hide_index=True, width="stretch")
 
@@ -432,9 +421,7 @@ with tab4:
         .reset_index(drop=True)
     )
     tabla_masc = masc_vis.copy()
-    tabla_masc["Revenue"] = tabla_masc["Revenue"].apply(
-        lambda v: f"${v:,.0f}"
-    )
+    tabla_masc["Revenue"] = tabla_masc["Revenue"].apply(lambda v: f"${v:,.0f}")
     tabla_masc.columns = ["Mascota", "Visitas", "Total gastado"]
     st.dataframe(tabla_masc, hide_index=True, width="stretch")
 
@@ -464,18 +451,11 @@ with tab4:
 
     # Heatmap raza × servicio
     st.subheader("Raza × servicio (visitas)")
-    st.caption(
-        "Que servicios demanda cada raza. "
-        "Solo razas con mas de 2 registros."
-    )
+    st.caption("Que servicios demanda cada raza. Solo razas con mas de 2 registros.")
     razas_freq = df_s["RAZA"].value_counts()
     razas_validas = razas_freq[razas_freq > 2].index
     df_rs = df_s[df_s["RAZA"].isin(razas_validas)].copy()
-    heat_rs = (
-        df_rs.groupby(["RAZA", "SERVICIO"])
-        .size()
-        .reset_index(name="Visitas")
-    )
+    heat_rs = df_rs.groupby(["RAZA", "SERVICIO"]).size().reset_index(name="Visitas")
     pivot_rs = (
         heat_rs.pivot(index="RAZA", columns="SERVICIO", values="Visitas")
         .fillna(0)
@@ -503,8 +483,11 @@ with tab5:
     st.subheader("Evolución mensual de servicios y ticket promedio")
     df_mens_s = (
         df_s.groupby(["AÑO", "MES"])
-        .agg(Servicios=("VALOR", "count"), Revenue=("VALOR", "sum"),
-             Ticket=("VALOR", "mean"))
+        .agg(
+            Servicios=("VALOR", "count"),
+            Revenue=("VALOR", "sum"),
+            Ticket=("VALOR", "mean"),
+        )
         .reset_index()
     )
     df_mens_s["Fecha"] = pd.to_datetime(
@@ -513,21 +496,30 @@ with tab5:
     df_mens_s = df_mens_s.sort_values("Fecha")
 
     fig_evol = go.Figure()
-    fig_evol.add_trace(go.Bar(
-        x=df_mens_s["Fecha"], y=df_mens_s["Servicios"],
-        name="Servicios", marker_color="steelblue", yaxis="y1",
-    ))
-    fig_evol.add_trace(go.Scatter(
-        x=df_mens_s["Fecha"], y=df_mens_s["Ticket"],
-        name="Ticket promedio (COP)", mode="lines+markers",
-        line={"color": "coral", "width": 2}, yaxis="y2",
-    ))
+    fig_evol.add_trace(
+        go.Bar(
+            x=df_mens_s["Fecha"],
+            y=df_mens_s["Servicios"],
+            name="Servicios",
+            marker_color="steelblue",
+            yaxis="y1",
+        )
+    )
+    fig_evol.add_trace(
+        go.Scatter(
+            x=df_mens_s["Fecha"],
+            y=df_mens_s["Ticket"],
+            name="Ticket promedio (COP)",
+            mode="lines+markers",
+            line={"color": "coral", "width": 2},
+            yaxis="y2",
+        )
+    )
     fig_evol.update_layout(
         title="Servicios mensuales y ticket promedio",
         xaxis_title="Mes",
         yaxis={"title": "Servicios"},
-        yaxis2={"title": "Ticket promedio (COP)", "overlaying": "y",
-                "side": "right"},
+        yaxis2={"title": "Ticket promedio (COP)", "overlaying": "y", "side": "right"},
         legend={"orientation": "h", "y": -0.15},
         height=460,
     )
@@ -577,11 +569,7 @@ with tab5:
     # Heatmap servicio × día
     st.subheader("Demanda de servicios por día de la semana")
     st.caption("Número de servicios realizados por combinación de tipo y día.")
-    heat = (
-        df_s5.groupby(["SERVICIO", "DIA_SEMANA"])
-        .size()
-        .reset_index(name="Visitas")
-    )
+    heat = df_s5.groupby(["SERVICIO", "DIA_SEMANA"]).size().reset_index(name="Visitas")
     heat_pivot = (
         heat.pivot(index="SERVICIO", columns="DIA_SEMANA", values="Visitas")
         .fillna(0)
@@ -606,18 +594,14 @@ with tab6:
 
     # ── Nuevas mascotas por mes ──────────────────────────────────────────────
     st.subheader("Nuevas mascotas por mes")
-    st.caption(
-        "Una mascota es 'nueva' el mes de su primera visita registrada."
-    )
+    st.caption("Una mascota es 'nueva' el mes de su primera visita registrada.")
     primera_visita = (
         df_s.dropna(subset=[col_prop]).groupby(col_prop)["FECHA"].min().reset_index()
     )
     primera_visita["AÑO"] = primera_visita["FECHA"].dt.year
     primera_visita["MES"] = primera_visita["FECHA"].dt.month
     nuevos_mes = (
-        primera_visita.groupby(["AÑO", "MES"])
-        .size()
-        .reset_index(name="Nuevos")
+        primera_visita.groupby(["AÑO", "MES"]).size().reset_index(name="Nuevos")
     )
     nuevos_mes["Fecha"] = pd.to_datetime(
         {"year": nuevos_mes["AÑO"], "month": nuevos_mes["MES"], "day": 1}
@@ -666,39 +650,53 @@ with tab6:
     st.plotly_chart(fig_seg, width="stretch")
     n_leales = int(freq_cl[freq_cl > 5].count())
     pct_leales = n_leales / len(freq_cl) * 100 if len(freq_cl) > 0 else 0
-    st.caption(
-        f"{n_leales} mascotas ({pct_leales:.1f}%) han visitado mas de 5 veces."
-    )
+    st.caption(f"{n_leales} mascotas ({pct_leales:.1f}%) han visitado mas de 5 veces.")
 
     st.divider()
 
     # ── Pareto de mascotas ───────────────────────────────────────────────────
     st.subheader("Concentracion de revenue por mascota (Pareto)")
     rev_cl = (
-        df_s.dropna(subset=[col_prop]).groupby(col_prop)["VALOR"]
+        df_s.dropna(subset=[col_prop])
+        .groupby(col_prop)["VALOR"]
         .sum()
         .sort_values(ascending=False)
         .reset_index(drop=True)
     )
-    rev_df = pd.DataFrame({
-        "pct_clientes": (rev_cl.index + 1) / len(rev_cl) * 100,
-        "pct_revenue": rev_cl.cumsum() / rev_cl.sum() * 100,
-    })
+    rev_df = pd.DataFrame(
+        {
+            "pct_clientes": (rev_cl.index + 1) / len(rev_cl) * 100,
+            "pct_revenue": rev_cl.cumsum() / rev_cl.sum() * 100,
+        }
+    )
     corte = rev_df[rev_df["pct_revenue"] >= 80].iloc[0]
     pct_cl_80 = corte["pct_clientes"]
     n_cl_80 = int(round(pct_cl_80 / 100 * len(rev_cl)))
 
     fig_pareto = go.Figure()
-    fig_pareto.add_trace(go.Scatter(
-        x=rev_df["pct_clientes"], y=rev_df["pct_revenue"],
-        mode="lines", name="Revenue acumulado",
-        line={"color": "steelblue", "width": 2},
-    ))
-    fig_pareto.add_hline(y=80, line_dash="dash", line_color="firebrick",
-                         annotation_text="80%", annotation_position="left")
-    fig_pareto.add_vline(x=pct_cl_80, line_dash="dash", line_color="coral",
-                         annotation_text=f"{pct_cl_80:.1f}% clientes",
-                         annotation_position="top right")
+    fig_pareto.add_trace(
+        go.Scatter(
+            x=rev_df["pct_clientes"],
+            y=rev_df["pct_revenue"],
+            mode="lines",
+            name="Revenue acumulado",
+            line={"color": "steelblue", "width": 2},
+        )
+    )
+    fig_pareto.add_hline(
+        y=80,
+        line_dash="dash",
+        line_color="firebrick",
+        annotation_text="80%",
+        annotation_position="left",
+    )
+    fig_pareto.add_vline(
+        x=pct_cl_80,
+        line_dash="dash",
+        line_color="coral",
+        annotation_text=f"{pct_cl_80:.1f}% clientes",
+        annotation_position="top right",
+    )
     fig_pareto.update_layout(
         xaxis_title="% de clientes (mayor a menor revenue)",
         yaxis_title="% revenue acumulado",
@@ -714,9 +712,7 @@ with tab6:
 
     # ── Retencion año a año ──────────────────────────────────────────────────
     st.subheader("Retencion de mascotas año a año")
-    st.caption(
-        "Porcentaje de mascotas atendidas en un año que volvieron el siguiente."
-    )
+    st.caption("Porcentaje de mascotas atendidas en un año que volvieron el siguiente.")
     years = sorted(df_s["AÑO"].unique())
     retention = []
     for i in range(len(years) - 1):
@@ -725,12 +721,14 @@ with tab6:
         cl_y2 = set(df_s[df_s["AÑO"] == y2][col_prop].dropna())
         retenidos = len(cl_y1 & cl_y2)
         total = len(cl_y1)
-        retention.append({
-            "Periodo": f"{y1} → {y2}",
-            "Mascotas año anterior": total,
-            "Regresaron": retenidos,
-            "Tasa (%)": round(retenidos / total * 100, 1) if total else 0,
-        })
+        retention.append(
+            {
+                "Periodo": f"{y1} → {y2}",
+                "Mascotas año anterior": total,
+                "Regresaron": retenidos,
+                "Tasa (%)": round(retenidos / total * 100, 1) if total else 0,
+            }
+        )
 
     if retention:
         df_ret = pd.DataFrame(retention)

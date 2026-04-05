@@ -38,18 +38,10 @@ pythonVersion = "3.12"
 reportMissingTypeStubs = "none"
 
 [dependency-groups]
-dev = ["pytest>=8.0"]
+dev = [
+    "pytest>=8.0",
+    "flake8>=7.0",
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-
-[tool.ruff]
-line-length = 79
-target-version = "py311"
-
-[tool.ruff.lint]
-select = ["E", "F", "W", "I"]
-ignore = []
-
-[tool.ruff.lint.isort]
-known-first-party = ["config", "src"]

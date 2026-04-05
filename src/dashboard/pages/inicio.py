@@ -17,9 +17,18 @@ BONOS = {"Bonos / Regalos a clientes (rosado)"}
 CATEGORIAS_CLIENTE = ASISTIO | FALTO_AVISO | FALTO_NO_AVISO | BONOS
 
 MES_NOMBRES = {
-    1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
-    5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
-    9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre",
+    1: "Enero",
+    2: "Febrero",
+    3: "Marzo",
+    4: "Abril",
+    5: "Mayo",
+    6: "Junio",
+    7: "Julio",
+    8: "Agosto",
+    9: "Septiembre",
+    10: "Octubre",
+    11: "Noviembre",
+    12: "Diciembre",
 }
 
 set_browser_tab_title("Dashboard")
@@ -31,30 +40,19 @@ st.caption("Resumen ejecutivo — Tienda + Peluquería")
 def _load():
     con = sqlite3.connect(DATABASE_PATH)
     df_v = pd.read_sql(
-        'SELECT FECHA, VENTAS_POST, "PELUQUERÍA", "TOTAL VENTAS DÍA" '
-        "FROM ventas",
+        'SELECT FECHA, VENTAS_POST, "PELUQUERÍA", "TOTAL VENTAS DÍA" FROM ventas',
         con,
     )
-    df_s = pd.read_sql(
-        "SELECT FECHA, VALOR, SERVICIO, RAZA FROM peluqueria", con
-    )
-    df_ap = pd.read_sql(
-        "SELECT status FROM alegra_productos", con
-    )
-    df_c = pd.read_sql(
-        "SELECT start, color_label FROM calendar_events", con
-    )
+    df_s = pd.read_sql("SELECT FECHA, VALOR, SERVICIO, RAZA FROM peluqueria", con)
+    df_ap = pd.read_sql("SELECT status FROM alegra_productos", con)
+    df_c = pd.read_sql("SELECT start, color_label FROM calendar_events", con)
     con.close()
 
     df_v["FECHA"] = pd.to_datetime(df_v["FECHA"], format="mixed")
     df_v["AÑO"] = df_v["FECHA"].dt.year
     df_v["MES"] = df_v["FECHA"].dt.month
-    df_v["VENTAS_POST"] = pd.to_numeric(
-        df_v["VENTAS_POST"], errors="coerce"
-    ).fillna(0)
-    df_v["PELUQUERÍA"] = pd.to_numeric(
-        df_v["PELUQUERÍA"], errors="coerce"
-    ).fillna(0)
+    df_v["VENTAS_POST"] = pd.to_numeric(df_v["VENTAS_POST"], errors="coerce").fillna(0)
+    df_v["PELUQUERÍA"] = pd.to_numeric(df_v["PELUQUERÍA"], errors="coerce").fillna(0)
     df_v["TOTAL VENTAS DÍA"] = pd.to_numeric(
         df_v["TOTAL VENTAS DÍA"], errors="coerce"
     ).fillna(0)
@@ -109,11 +107,8 @@ st.divider()
 # ── Bloque 2 — Tendencia mensual combinada ───────────────────────────────────
 st.subheader("Tendencia mensual de ingresos")
 
-df_mens = (
-    df_v.groupby(["AÑO", "MES"])[["VENTAS_POST", "PELUQUERÍA", "TOTAL VENTAS DÍA"]]
-    .sum()
-    .reset_index()
-)
+_cols_mens = ["VENTAS_POST", "PELUQUERÍA", "TOTAL VENTAS DÍA"]
+df_mens = df_v.groupby(["AÑO", "MES"])[_cols_mens].sum().reset_index()
 df_mens["Fecha"] = pd.to_datetime(
     {"year": df_mens["AÑO"], "month": df_mens["MES"], "day": 1}
 )
@@ -188,9 +183,7 @@ with col_area:
     df_area = df_area.rename(
         columns={"VENTAS_POST": "Tienda", "PELUQUERÍA": "Peluquería"}
     )
-    df_long = df_area.melt(
-        id_vars="Fecha", var_name="Fuente", value_name="COP"
-    )
+    df_long = df_area.melt(id_vars="Fecha", var_name="Fuente", value_name="COP")
     fig_area = px.area(
         df_long,
         x="Fecha",
@@ -215,24 +208,18 @@ with col_t:
     with st.container(border=True):
         st.markdown("**Tienda**")
         df_v_con = df_v[df_v["VENTAS_POST"] > 0]
-        mediana_tienda = (
-            df_v_con["VENTAS_POST"].median() if len(df_v_con) else 0
-        )
-        df_mens_t = (
-            df_v.groupby(["AÑO", "MES"])["VENTAS_POST"].sum().reset_index()
-        )
+        mediana_tienda = df_v_con["VENTAS_POST"].median() if len(df_v_con) else 0
+        df_mens_t = df_v.groupby(["AÑO", "MES"])["VENTAS_POST"].sum().reset_index()
         mejor_mes_row = (
-            df_mens_t.loc[df_mens_t["VENTAS_POST"].idxmax()]
-            if len(df_mens_t) else None
+            df_mens_t.loc[df_mens_t["VENTAS_POST"].idxmax()] if len(df_mens_t) else None
         )
-        productos_activos = int(
-            (df_ap["status"] == "active").sum()
-        ) if len(df_ap) else 0
+        productos_activos = (
+            int((df_ap["status"] == "active").sum()) if len(df_ap) else 0
+        )
         st.metric("Mediana diaria", f"${mediana_tienda:,.0f}")
         if mejor_mes_row is not None:
             mejor_mes_label = (
-                f"{MES_NOMBRES[int(mejor_mes_row['MES'])]} "
-                f"{int(mejor_mes_row['AÑO'])}"
+                f"{MES_NOMBRES[int(mejor_mes_row['MES'])]} {int(mejor_mes_row['AÑO'])}"
             )
             st.metric("Mejor mes", mejor_mes_label)
         st.metric("Productos activos", f"{productos_activos:,}")
@@ -242,9 +229,7 @@ with col_p:
     with st.container(border=True):
         st.markdown("**Peluquería**")
         df_v_pelu = df_v[df_v["PELUQUERÍA"] > 0]
-        mediana_pelu = (
-            df_v_pelu["PELUQUERÍA"].median() if len(df_v_pelu) else 0
-        )
+        mediana_pelu = df_v_pelu["PELUQUERÍA"].median() if len(df_v_pelu) else 0
         servicio_top = (
             df_s["SERVICIO"].value_counts().idxmax()
             if not df_s["SERVICIO"].dropna().empty
@@ -266,9 +251,7 @@ with col_a:
         st.metric("Total citas", f"{n_citas:,}")
         st.metric("Tasa de asistencia", f"{tasa_asist:.1f}%")
         # Mes con más inasistencias
-        df_inasist = df_c[
-            df_c["color_label"].isin(FALTO_AVISO | FALTO_NO_AVISO)
-        ]
+        df_inasist = df_c[df_c["color_label"].isin(FALTO_AVISO | FALTO_NO_AVISO)]
         if not df_inasist.empty:
             peor = (
                 df_inasist.groupby(["AÑO", "MES"])
@@ -277,9 +260,7 @@ with col_a:
                 .sort_values("N", ascending=False)
                 .iloc[0]
             )
-            peor_label = (
-                f"{MES_NOMBRES[int(peor['MES'])]} {int(peor['AÑO'])}"
-            )
+            peor_label = f"{MES_NOMBRES[int(peor['MES'])]} {int(peor['AÑO'])}"
             st.metric("Mes con más inasistencias", peor_label)
         else:
             st.metric("Mes con más inasistencias", "—")

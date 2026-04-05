@@ -7,7 +7,7 @@ if _rp not in sys.path:
     sys.path.insert(0, _rp)
 
 import streamlit as st  # noqa: E402
-from streamlit.runtime.scriptrunner_utils.script_run_context import (  # noqa: E402
+from streamlit.runtime.scriptrunner_utils.script_run_context import (
     get_script_run_ctx,
 )
 

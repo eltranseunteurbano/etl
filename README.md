@@ -63,11 +63,14 @@ uv run python -c "from src.alegra.pipeline import pipeline; pipeline()"
 uv run python -c "from src.calendar.pipeline import pipeline; pipeline()"
 ```
 
-### Pruebas y calidad de código
+### Pruebas y estilo (PEP 8)
 
 ```bash
 uv run pytest
+uv run flake8 src/
 ```
+
+La comprobación de estilo usa **flake8** (`setup.cfg`: línea máxima 79 caracteres, alineado con PEP 8).
 
 ### Configuración
 

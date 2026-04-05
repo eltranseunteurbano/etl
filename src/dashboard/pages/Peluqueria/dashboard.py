@@ -11,9 +11,18 @@ from src.config.settings import DATABASE_PATH
 from src.dashboard.utils import set_browser_tab_title
 
 MES_NOMBRES = {
-    1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
-    5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
-    9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre",
+    1: "Enero",
+    2: "Febrero",
+    3: "Marzo",
+    4: "Abril",
+    5: "Mayo",
+    6: "Junio",
+    7: "Julio",
+    8: "Agosto",
+    9: "Septiembre",
+    10: "Octubre",
+    11: "Noviembre",
+    12: "Diciembre",
 }
 
 ASISTIO = {"Cliente asistió (default)", "Cliente asistió (Lila)"}
@@ -29,13 +38,9 @@ st.title("Peluquería · Resumen")
 @st.cache_data
 def _load():
     con = sqlite3.connect(DATABASE_PATH)
-    df_v = pd.read_sql(
-        "SELECT FECHA, \"PELUQUERÍA\" FROM ventas", con
-    )
+    df_v = pd.read_sql('SELECT FECHA, "PELUQUERÍA" FROM ventas', con)
     df_s = pd.read_sql("SELECT * FROM peluqueria", con)
-    df_c = pd.read_sql(
-        "SELECT start, color_label FROM calendar_events", con
-    )
+    df_c = pd.read_sql("SELECT start, color_label FROM calendar_events", con)
     con.close()
     df_v["FECHA"] = pd.to_datetime(df_v["FECHA"], format="mixed")
     df_v["AÑO"] = df_v["FECHA"].dt.year
@@ -77,9 +82,7 @@ servicio_top = (
     else "—"
 )
 raza_top = (
-    df_s["RAZA"].value_counts().idxmax()
-    if not df_s["RAZA"].dropna().empty
-    else "—"
+    df_s["RAZA"].value_counts().idxmax() if not df_s["RAZA"].dropna().empty else "—"
 )
 valor_medio = df_s["VALOR"].mean() if len(df_s) else 0
 
@@ -95,11 +98,7 @@ st.divider()
 # ── Tendencia mensual ───────────────────────────────────────────────────────
 st.subheader("Tendencia mensual de ingresos")
 
-df_mens = (
-    df_v.groupby(["AÑO", "MES"])[col_pelu]
-    .sum()
-    .reset_index()
-)
+df_mens = df_v.groupby(["AÑO", "MES"])[col_pelu].sum().reset_index()
 df_mens["Fecha"] = pd.to_datetime(
     {"year": df_mens["AÑO"], "month": df_mens["MES"], "day": 1}
 )
@@ -111,7 +110,9 @@ fig_tend = go.Figure(
         y=df_mens[col_pelu],
         name="Ingresos peluquería",
         marker_color="steelblue",
-        text=df_mens[col_pelu].apply(lambda v: f"${v / 1e6:.1f}M" if v >= 1e6 else f"${v:,.0f}"),
+        text=df_mens[col_pelu].apply(
+            lambda v: f"${v / 1e6:.1f}M" if v >= 1e6 else f"${v:,.0f}"
+        ),
         textposition="outside",
     )
 )
@@ -148,12 +149,7 @@ st.divider()
 # ── Top 5 servicios por revenue ─────────────────────────────────────────────
 st.subheader("Top 5 servicios por revenue")
 
-top5_serv = (
-    df_s.groupby("SERVICIO")["VALOR"]
-    .sum()
-    .nlargest(5)
-    .reset_index()
-)
+top5_serv = df_s.groupby("SERVICIO")["VALOR"].sum().nlargest(5).reset_index()
 fig_top5 = px.bar(
     top5_serv,
     x="VALOR",

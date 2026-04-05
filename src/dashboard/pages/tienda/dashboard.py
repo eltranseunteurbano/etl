@@ -188,7 +188,8 @@ st.info(
     f"De los {len(df_par)} productos con ventas registradas, "
     f"solo los {n_prod_80} mas vendidos ({pct_prod_80:.1f}% del catalogo) "
     f"concentran el 80% del revenue total. "
-    f"Los {len(df_par) - n_prod_80} productos restantes generan el 20% restante."
+    f"Los {len(df_par) - n_prod_80} productos restantes generan el 20% "
+    f"restante."
 )
 
 st.divider()
@@ -197,20 +198,17 @@ st.divider()
 st.subheader("Salud del catálogo")
 
 n_sin_venta = len(df_activos[df_activos["total_revenue"] == 0])
-n_inact_con = len(
-    df_p[(df_p["status"] == "inactive") & (df_p["total_revenue"] > 0)]
-)
+n_inact_con = len(df_p[(df_p["status"] == "inactive") & (df_p["total_revenue"] > 0)])
 cs1, cs2 = st.columns(2)
 cs1.metric("Activos sin ventas", f"{n_sin_venta:,}")
 cs2.metric("Inactivos con ventas", f"{n_inact_con:,}")
 
 # Interpretación 2 — productividad del catálogo
 n_activos_con = len(df_activos[df_activos["total_revenue"] > 0])
-pct_activos_con = (
-    n_activos_con / len(df_activos) * 100 if len(df_activos) > 0 else 0
-)
+pct_activos_con = n_activos_con / len(df_activos) * 100 if len(df_activos) > 0 else 0
 st.caption(
     f"Solo el {pct_activos_con:.1f}% del catalogo activo "
-    f"({n_activos_con} de {len(df_activos)} productos) tiene ventas registradas. "
-    "El resto puede ser candidato a revision o impulso comercial."
+    f"({n_activos_con} de {len(df_activos)} productos) tiene ventas "
+    f"registradas. El resto puede ser candidato a revision o impulso "
+    f"comercial."
 )
