@@ -84,9 +84,10 @@ n_asistio = df_cl["color_label"].isin(ASISTIO).sum()
 n_inasist = n_clientes - n_asistio
 pct_asist = n_asistio / n_clientes * 100 if n_clientes > 0 else 0
 
-c1, c2, c3, c4 = st.columns(4)
+c1, c2 = st.columns(2)
 c1.metric("Total eventos", f"{n_total:,}")
 c2.metric("Eventos de clientes", f"{n_clientes:,}")
+c3, c4 = st.columns(2)
 c3.metric("Tasa de asistencia", f"{pct_asist:.1f}%")
 c4.metric("Inasistencias", f"{n_inasist:,}")
 

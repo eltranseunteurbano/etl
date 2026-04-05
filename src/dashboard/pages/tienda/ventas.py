@@ -72,9 +72,10 @@ df = _load_ventas()
 col_ventas = "TOTAL VENTAS DÍA"
 
 # ── Métricas rápidas ────────────────────────────────────────────────────────
-c1, c2, c3, c4 = st.columns(4)
+c1, c2 = st.columns(2)
 c1.metric("Días registrados", f"{len(df):,}")
 c2.metric("Mediana diaria", f"${df[col_ventas].median():,.0f}")
+c3, c4 = st.columns(2)
 c3.metric("Mejor día", f"${df[col_ventas].max():,.0f}")
 c4.metric("Día más bajo", f"${df[col_ventas].min():,.0f}")
 

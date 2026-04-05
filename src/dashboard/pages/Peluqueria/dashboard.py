@@ -57,12 +57,13 @@ df_v_con = df_v[df_v[col_pelu] > 0]
 
 # ── Métricas — ingresos ─────────────────────────────────────────────────────
 st.subheader("Ingresos de peluquería")
-c1, c2, c3, c4 = st.columns(4)
+c1, c2 = st.columns(2)
 c1.metric("Total acumulado", f"${df_v[col_pelu].sum():,.0f}")
 c2.metric(
     "Mediana diaria",
     f"${df_v_con[col_pelu].median():,.0f}" if len(df_v_con) else "—",
 )
+c3, c4 = st.columns(2)
 c3.metric("Mejor día", f"${df_v[col_pelu].max():,.0f}")
 c4.metric("Días con registro", f"{len(df_v_con):,}")
 
@@ -82,9 +83,10 @@ raza_top = (
 )
 valor_medio = df_s["VALOR"].mean() if len(df_s) else 0
 
-c5, c6, c7, c8 = st.columns(4)
+c5, c6 = st.columns(2)
 c5.metric("Total servicios", f"{len(df_s):,}")
 c6.metric("Servicio más frecuente", str(servicio_top))
+c7, c8 = st.columns(2)
 c7.metric("Raza más atendida", str(raza_top))
 c8.metric("Valor promedio", f"${valor_medio:,.0f}")
 

@@ -63,15 +63,16 @@ total_revenue = df_prod["total_revenue"].sum()
 top_prod_name = df_prod.loc[df_prod["total_revenue"].idxmax(), "name"]
 total_facturas = df_fact["id"].nunique()
 
-c1, c2, c3, c4 = st.columns(4)
+c1, c2 = st.columns(2)
 c1.metric("Productos activos", f"{total_activos:,}")
 c2.metric("Revenue total (facturas)", f"${total_revenue:,.0f}")
-c3.metric("Facturas registradas", f"{total_facturas:,}")
 label = (
     top_prod_name[:28] + "…"
     if isinstance(top_prod_name, str) and len(top_prod_name) > 28
     else top_prod_name
 )
+c3, c4 = st.columns(2)
+c3.metric("Facturas registradas", f"{total_facturas:,}")
 c4.metric("Producto líder", str(label or ""))
 
 st.divider()

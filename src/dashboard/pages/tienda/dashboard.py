@@ -55,9 +55,10 @@ df_con_ventas = df_p[df_p["total_revenue"] > 0].copy()
 
 # ── Métricas — ventas diarias ───────────────────────────────────────────────
 st.subheader("Ventas diarias (libro de ventas)")
-c1, c2, c3, c4 = st.columns(4)
+c1, c2 = st.columns(2)
 c1.metric("Total acumulado", f"${df_v['VENTAS_POST'].sum():,.0f}")
 c2.metric("Mediana diaria", f"${df_v['TOTAL VENTAS DÍA'].median():,.0f}")
+c3, c4 = st.columns(2)
 c3.metric("Mejor día", f"${df_v['TOTAL VENTAS DÍA'].max():,.0f}")
 c4.metric("Días registrados", f"{len(df_v):,}")
 
@@ -71,9 +72,10 @@ label = (
     if isinstance(top_prod_name, str) and len(top_prod_name) > 28
     else str(top_prod_name or "")
 )
-c5, c6, c7, c8 = st.columns(4)
+c5, c6 = st.columns(2)
 c5.metric("Revenue facturado", f"${df_f['total_product'].sum():,.0f}")
 c6.metric("Facturas únicas", f"{df_f['id'].nunique():,}")
+c7, c8 = st.columns(2)
 c7.metric("Productos con ventas", f"{len(df_con_ventas):,}")
 c8.metric("Producto líder", label)
 

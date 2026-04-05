@@ -74,9 +74,10 @@ df_s = _load_servicios()
 df_act = df[df[COL_PELU] > 0].copy()
 
 # ── Métricas rápidas ────────────────────────────────────────────────────────
-c1, c2, c3, c4 = st.columns(4)
+c1, c2 = st.columns(2)
 c1.metric("Días con registro", f"{len(df_act):,}")
 c2.metric("Mediana diaria", f"${df_act[COL_PELU].median():,.0f}")
+c3, c4 = st.columns(2)
 c3.metric("Mejor día", f"${df_act[COL_PELU].max():,.0f}")
 c4.metric("Total servicios registrados", f"{len(df_s):,}")
 
