@@ -55,11 +55,10 @@ df_con_ventas = df_p[df_p["total_revenue"] > 0].copy()
 
 # ── Métricas — ventas diarias ───────────────────────────────────────────────
 st.subheader("Ventas diarias (libro de ventas)")
-c1, c2, c3, c4 = st.columns(4)
+c1, c2 = st.columns(2)
 c1.metric("Total acumulado", f"${df_v['VENTAS_POST'].sum():,.0f}")
-c2.metric(
-    "Mediana diaria", f"${df_v['TOTAL VENTAS DÍA'].median():,.0f}"
-)
+c2.metric("Mediana diaria", f"${df_v['TOTAL VENTAS DÍA'].median():,.0f}")
+c3, c4 = st.columns(2)
 c3.metric("Mejor día", f"${df_v['TOTAL VENTAS DÍA'].max():,.0f}")
 c4.metric("Días registrados", f"{len(df_v):,}")
 
@@ -73,9 +72,10 @@ label = (
     if isinstance(top_prod_name, str) and len(top_prod_name) > 28
     else str(top_prod_name or "")
 )
-c5, c6, c7, c8 = st.columns(4)
+c5, c6 = st.columns(2)
 c5.metric("Revenue facturado", f"${df_f['total_product'].sum():,.0f}")
 c6.metric("Facturas únicas", f"{df_f['id'].nunique():,}")
+c7, c8 = st.columns(2)
 c7.metric("Productos con ventas", f"{len(df_con_ventas):,}")
 c8.metric("Producto líder", label)
 
@@ -84,21 +84,13 @@ st.divider()
 # ── Tendencia mensual unificada ──────────────────────────────────────────────
 st.subheader("Tendencia mensual de revenue")
 
-df_mens_v = (
-    df_v.groupby(["AÑO", "MES"])["VENTAS_POST"]
-    .sum()
-    .reset_index()
-)
+df_mens_v = df_v.groupby(["AÑO", "MES"])["VENTAS_POST"].sum().reset_index()
 df_mens_v["Fecha"] = pd.to_datetime(
     {"year": df_mens_v["AÑO"], "month": df_mens_v["MES"], "day": 1}
 )
 df_mens_v = df_mens_v.sort_values("Fecha")
 
-df_mens_f = (
-    df_f.groupby(["AÑO", "MES"])["total_product"]
-    .sum()
-    .reset_index()
-)
+df_mens_f = df_f.groupby(["AÑO", "MES"])["total_product"].sum().reset_index()
 df_mens_f["Fecha"] = pd.to_datetime(
     {"year": df_mens_f["AÑO"], "month": df_mens_f["MES"], "day": 1}
 )
@@ -196,7 +188,8 @@ st.info(
     f"De los {len(df_par)} productos con ventas registradas, "
     f"solo los {n_prod_80} mas vendidos ({pct_prod_80:.1f}% del catalogo) "
     f"concentran el 80% del revenue total. "
-    f"Los {len(df_par) - n_prod_80} productos restantes generan el 20% restante."
+    f"Los {len(df_par) - n_prod_80} productos restantes generan el 20% "
+    f"restante."
 )
 
 st.divider()
@@ -205,20 +198,17 @@ st.divider()
 st.subheader("Salud del catálogo")
 
 n_sin_venta = len(df_activos[df_activos["total_revenue"] == 0])
-n_inact_con = len(
-    df_p[(df_p["status"] == "inactive") & (df_p["total_revenue"] > 0)]
-)
+n_inact_con = len(df_p[(df_p["status"] == "inactive") & (df_p["total_revenue"] > 0)])
 cs1, cs2 = st.columns(2)
 cs1.metric("Activos sin ventas", f"{n_sin_venta:,}")
 cs2.metric("Inactivos con ventas", f"{n_inact_con:,}")
 
 # Interpretación 2 — productividad del catálogo
 n_activos_con = len(df_activos[df_activos["total_revenue"] > 0])
-pct_activos_con = (
-    n_activos_con / len(df_activos) * 100 if len(df_activos) > 0 else 0
-)
+pct_activos_con = n_activos_con / len(df_activos) * 100 if len(df_activos) > 0 else 0
 st.caption(
     f"Solo el {pct_activos_con:.1f}% del catalogo activo "
-    f"({n_activos_con} de {len(df_activos)} productos) tiene ventas registradas. "
-    "El resto puede ser candidato a revision o impulso comercial."
+    f"({n_activos_con} de {len(df_activos)} productos) tiene ventas "
+    f"registradas. El resto puede ser candidato a revision o impulso "
+    f"comercial."
 )

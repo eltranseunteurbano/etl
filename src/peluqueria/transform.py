@@ -24,7 +24,7 @@ def _clean_peluqueria(df: pd.DataFrame) -> pd.DataFrame:
     out = out[COLS_PELUQUERIA].copy()
     out["FECHA"] = pd.to_datetime(out["FECHA"], dayfirst=True, errors="coerce")
     out = out.loc[out["FECHA"].notna()].copy()
-    out["FECHA"] = out["FECHA"].dt.strftime("%d/%m/%Y")
+    out["FECHA"] = out["FECHA"].dt.strftime("%Y-%m-%d")
     out = _apply_categoricas_peluqueria(out)
     return out
 

@@ -63,15 +63,16 @@ total_revenue = df_prod["total_revenue"].sum()
 top_prod_name = df_prod.loc[df_prod["total_revenue"].idxmax(), "name"]
 total_facturas = df_fact["id"].nunique()
 
-c1, c2, c3, c4 = st.columns(4)
+c1, c2 = st.columns(2)
 c1.metric("Productos activos", f"{total_activos:,}")
 c2.metric("Revenue total (facturas)", f"${total_revenue:,.0f}")
-c3.metric("Facturas registradas", f"{total_facturas:,}")
 label = (
     top_prod_name[:28] + "…"
     if isinstance(top_prod_name, str) and len(top_prod_name) > 28
     else top_prod_name
 )
+c3, c4 = st.columns(2)
+c3.metric("Facturas registradas", f"{total_facturas:,}")
 c4.metric("Producto líder", str(label or ""))
 
 st.divider()
@@ -107,9 +108,7 @@ with tab1:
         },
         title=f"Top {n} por revenue",
     )
-    fig_rev.update_layout(
-        yaxis={"categoryorder": "total ascending"}, height=520
-    )
+    fig_rev.update_layout(yaxis={"categoryorder": "total ascending"}, height=520)
     st.plotly_chart(fig_rev, width="stretch")
 
     st.subheader("Top 10 productos por unidades vendidas")
@@ -156,9 +155,7 @@ with tab1:
     ]
     tabla["Precio"] = tabla["Precio"].apply(lambda v: f"${v:,.0f}")
     tabla["Revenue"] = tabla["Revenue"].apply(lambda v: f"${v:,.0f}")
-    tabla["Unidades vendidas"] = tabla["Unidades vendidas"].apply(
-        lambda v: f"{v:,.0f}"
-    )
+    tabla["Unidades vendidas"] = tabla["Unidades vendidas"].apply(lambda v: f"{v:,.0f}")
     st.dataframe(tabla, hide_index=True, width="stretch")
 
 # ── Tab 2: Distribución de precios ───────────────────────────────────────────
@@ -209,8 +206,8 @@ with tab2:
     if n_out_rev > 0:
         rango_rev = f"${out_rev.min():,.0f} – ${out_rev.max():,.0f}"
         st.caption(
-            f"{n_out_rev} productos con revenue > ${p99_rev:,.0f} (percentil 99) "
-            f"no se muestran. Rango: {rango_rev}. "
+            f"{n_out_rev} productos con revenue > ${p99_rev:,.0f} "
+            f"(percentil 99) no se muestran. Rango: {rango_rev}. "
             f"Mediana: ${revenue.median():,.0f}."
         )
 
@@ -401,16 +398,12 @@ with tab4:
         "Mes",
         [
             MES_NOMBRES[m]
-            for m in sorted(
-                df_fact[df_fact["AÑO"] == year_sel]["MES"].unique()
-            )
+            for m in sorted(df_fact[df_fact["AÑO"] == year_sel]["MES"].unique())
         ],
     )
     mes_sel = next(k for k, v in MES_NOMBRES.items() if v == mes_sel_nombre)
 
-    df_mes_sel = df_fact[
-        (df_fact["AÑO"] == year_sel) & (df_fact["MES"] == mes_sel)
-    ]
+    df_mes_sel = df_fact[(df_fact["AÑO"] == year_sel) & (df_fact["MES"] == mes_sel)]
     top_mes = (
         df_mes_sel.groupby("item_name")
         .agg(
@@ -489,9 +482,11 @@ with tab5:
         height=420,
     )
     st.plotly_chart(fig_pareto, width="stretch")
+    _n_p80 = int(round(pct_prod_80 / 100 * len(df_pareto)))
+    _n_par = len(df_pareto)
     st.caption(
-        f"El {pct_prod_80:.1f}% de los productos ({int(round(pct_prod_80 / 100 * len(df_pareto)))} "
-        f"de {len(df_pareto)}) concentra el 80% del revenue total."
+        f"El {pct_prod_80:.1f}% de los productos ({_n_p80} de {_n_par}) "
+        f"concentra el 80% del revenue total."
     )
 
     st.divider()
@@ -503,9 +498,7 @@ with tab5:
         "Una diferencia negativa indica descuentos o variaciones de precio."
     )
 
-    df_precio_real = df_con_ventas[
-        df_con_ventas["total_sold_quantity"] > 0
-    ].copy()
+    df_precio_real = df_con_ventas[df_con_ventas["total_sold_quantity"] > 0].copy()
     df_precio_real["precio_real"] = (
         df_precio_real["total_revenue"] / df_precio_real["total_sold_quantity"]
     )
@@ -629,9 +622,7 @@ with tab5:
     )
 
     df_rot = df_activos[df_activos["available_quantity"] > 0].copy()
-    df_rot["rotacion"] = (
-        df_rot["total_sold_quantity"] / df_rot["available_quantity"]
-    )
+    df_rot["rotacion"] = df_rot["total_sold_quantity"] / df_rot["available_quantity"]
 
     top_rot = df_rot.nlargest(20, "rotacion")[
         ["name", "rotacion", "total_sold_quantity", "available_quantity"]
@@ -660,16 +651,12 @@ with tab5:
     df_activos_sin_venta = df_activos[df_activos["total_revenue"] == 0][
         ["name", "price", "available_quantity"]
     ].copy()
-    df_activos_sin_venta = df_activos_sin_venta.sort_values(
-        "price", ascending=False
-    )
+    df_activos_sin_venta = df_activos_sin_venta.sort_values("price", ascending=False)
     df_activos_sin_venta.columns = ["Producto", "Precio", "Stock"]
     df_activos_sin_venta["Precio"] = df_activos_sin_venta["Precio"].apply(
         lambda v: f"${v:,.0f}"
     )
-    st.caption(
-        f"{len(df_activos_sin_venta)} productos activos sin ventas registradas."
-    )
+    st.caption(f"{len(df_activos_sin_venta)} productos activos sin ventas registradas.")
     st.dataframe(df_activos_sin_venta, hide_index=True, width="stretch")
 
     st.markdown("**Productos inactivos con ventas registradas**")

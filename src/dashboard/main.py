@@ -7,7 +7,7 @@ if _rp not in sys.path:
     sys.path.insert(0, _rp)
 
 import streamlit as st  # noqa: E402
-from streamlit.runtime.scriptrunner_utils.script_run_context import (  # noqa: E402
+from streamlit.runtime.scriptrunner_utils.script_run_context import (
     get_script_run_ctx,
 )
 
@@ -62,6 +62,12 @@ peluqueria_ventas = st.Page(
     icon=":material/payments:",
     url_path="peluqueria_ventas",
 )
+predicciones = st.Page(
+    "pages/predicciones.py",
+    title="Predicciones",
+    icon=":material/query_stats:",
+    url_path="predicciones",
+)
 
 nav = st.navigation(
     {
@@ -76,6 +82,7 @@ nav = st.navigation(
             peluqueria_agenda,
             peluqueria_ventas,
         ],
+        "Análisis": [predicciones],
     }
 )
 nav.run()
