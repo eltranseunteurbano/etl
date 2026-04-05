@@ -1,0 +1,28 @@
+Instalación — ETL Srta. Eva
+============================
+
+1. Clonar el repositorio:
+   git clone https://github.com/eltranseunteurbano/etl.git
+   cd etl
+
+2. Instalar dependencias con uv (Python ≥ 3.11 y uv instalados):
+   uv sync
+
+3. Variables de entorno (.env):
+   Copiar el archivo .env adjunto a la raíz del proyecto (junto a main.py).
+   Si no hay adjunto, usar:  cp .env.example .env  y completar los valores.
+
+4. Google Calendar (solo si usarás ese pipeline):
+   - client_secrets.json → colocarlo en credentials/ (archivo adjunto).
+   - token.json → si se entrega adjunto, copiarlo a credentials/; si no,
+     se genera la primera vez que ejecutes el ETL de Calendar (navegador).
+
+5. Datos en Excel (ventas / peluquería):
+   Colocar los libros en data/sources/ según indique el README del repo.
+
+6. Ejecutar:
+   uv run python main.py              # ETL completo + dashboard
+   uv run python main.py --etl        # solo ETL
+   uv run python main.py --dash       # solo dashboard
+
+Más detalle: README.md
